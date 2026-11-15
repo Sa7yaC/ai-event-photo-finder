@@ -390,25 +390,25 @@ function AttendeeSearchContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center space-y-4">
-        <RefreshCw className="h-8 w-8 text-indigo-400 animate-spin" />
-        <p className="text-sm text-slate-400 font-mono tracking-wide">Connecting to Event Gallery...</p>
+      <div className="min-h-screen bg-slate-50/70 text-slate-900 flex flex-col items-center justify-center space-y-4 font-sans">
+        <RefreshCw className="h-8 w-8 text-[#0053FF] animate-spin" />
+        <p className="text-sm text-slate-500 font-medium tracking-wide">Connecting to Event Gallery...</p>
       </div>
     );
   }
 
   if (error || !event) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-4">
-        <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 text-center space-y-4 shadow-2xl">
-          <div className="h-12 w-12 rounded-2xl bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto">
+      <div className="min-h-screen bg-slate-50/70 text-slate-900 flex flex-col items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white border border-slate-200/90 rounded-3xl p-8 text-center space-y-4 shadow-xl">
+          <div className="h-12 w-12 rounded-2xl bg-rose-50 text-rose-500 border border-rose-200 flex items-center justify-center mx-auto">
             <AlertCircle className="h-6 w-6" />
           </div>
-          <h2 className="text-xl font-bold text-white">Event Not Found</h2>
-          <p className="text-sm text-slate-400">{error || "The event does not exist or has expired."}</p>
+          <h2 className="text-xl font-bold text-slate-900">Event Not Found</h2>
+          <p className="text-sm text-slate-500">{error || "The event does not exist or has expired."}</p>
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors shadow-lg shadow-indigo-600/20"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0053FF] hover:bg-[#0047db] text-white text-xs font-bold transition-colors shadow-lg shadow-[#0053FF]/20"
           >
             <ArrowLeft className="h-4 w-4" />
             <span>Go to Dashboard</span>
@@ -419,7 +419,7 @@ function AttendeeSearchContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen bg-slate-50/70 text-slate-900 flex flex-col font-sans selection:bg-[#0053FF] selection:text-white">
       {/* Hidden file input for slot uploads */}
       <input
         ref={slotFileRef}
@@ -447,78 +447,78 @@ function AttendeeSearchContent() {
         }}
       />
 
-      {/* Top Header */}
-      <header className="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-xl sticky top-0 z-30">
-        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/dashboard" className="flex items-center gap-2.5 group">
-            <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-indigo-500 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform">
-              <Camera className="h-4 w-4 text-white" />
-            </div>
-            <span className="font-bold text-base tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-300 bg-clip-text text-transparent">
-              PhotoFinder AI
-            </span>
+      {/* Top Header - Translucent & Sleek */}
+      <header className="border-b border-slate-200/60 bg-white/65 backdrop-blur-xl sticky top-0 z-30 transition-colors">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 h-16 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <img 
+              src="/nextshare-logo-3d.png?v=3d" 
+              alt="NextShare Logo" 
+              className="h-9 sm:h-10 w-auto object-contain transition-transform group-hover:scale-102" 
+            />
           </Link>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <button
               onClick={copyEventLink}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700/60 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold border border-slate-200/80 transition-colors shadow-xs"
               title="Share event link"
             >
-              {copiedLink ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Share2 className="h-3.5 w-3.5" />}
+              {copiedLink ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Share2 className="h-3.5 w-3.5" />}
               <span>{copiedLink ? "Copied" : "Share"}</span>
             </button>
             <Link
               href={`/events/${event.id}/manage`}
-              className="text-xs text-indigo-400 hover:text-indigo-300 hover:underline font-mono"
+              className="px-4 py-2 rounded-xl text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 transition-all shadow-xs flex items-center gap-1.5"
             >
-              Organizer portal →
+              <span>Organizer portal</span>
+              <span>→</span>
             </Link>
           </div>
         </div>
       </header>
 
       {/* Main Container */}
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-8 space-y-10">
+      <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-8 space-y-8">
         {/* Event Hero Banner */}
-        <section className="relative rounded-3xl border border-slate-800/80 bg-gradient-to-b from-slate-900/90 via-slate-900/50 to-slate-950 p-6 sm:p-10 overflow-hidden shadow-2xl">
-          <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-violet-500/10 blur-3xl pointer-events-none" />
+        <section className="relative rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-10 overflow-hidden shadow-sm">
+          <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-blue-100/50 blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-amber-100/40 blur-3xl pointer-events-none" />
 
           <div className="relative space-y-4 max-w-2xl">
             <div className="flex flex-wrap items-center gap-2.5">
-              <span className="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">
                 ATTENDEE PORTAL
               </span>
-              <span className="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+              <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-[#0053FF] border border-blue-200">
                 Multi-Angle Precision Verification
               </span>
               {event.event_date && (
-                <span className="text-xs text-slate-400 flex items-center gap-1 font-mono">
-                  <Calendar className="h-3.5 w-3.5 text-indigo-400" />
+                <span className="text-xs text-slate-500 flex items-center gap-1 font-mono">
+                  <Calendar className="h-3.5 w-3.5 text-[#0053FF]" />
                   {event.event_date}
                 </span>
               )}
               {stats && (
-                <span className="text-xs text-indigo-300 flex items-center gap-1 font-mono bg-indigo-500/10 px-2.5 py-0.5 rounded-full border border-indigo-500/20">
-                  <Layers className="h-3.5 w-3.5" />
+                <span className="text-xs text-slate-600 flex items-center gap-1 font-mono bg-slate-50 px-2.5 py-0.5 rounded-full border border-slate-200">
+                  <Layers className="h-3.5 w-3.5 text-[#0053FF]" />
                   {stats.processed_photos} photos indexed ({stats.detected_faces} faces)
                 </span>
               )}
             </div>
 
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 leading-tight">
               {event.name}
             </h1>
             {event.description && (
-              <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
+              <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
                 {event.description}
               </p>
             )}
 
-            <div className="pt-1 flex items-center gap-2 text-xs text-slate-400 font-mono">
+            <div className="pt-1 flex items-center gap-2 text-xs text-slate-500 font-mono">
               <span>Event slug:</span>
-              <span className="text-slate-200 bg-slate-800/70 px-2 py-0.5 rounded border border-slate-700/50">
+              <span className="text-slate-800 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 font-bold">
                 {event.slug}
               </span>
             </div>
@@ -526,13 +526,13 @@ function AttendeeSearchContent() {
         </section>
 
         {/* Biometric Privacy Pledge */}
-        <section className="rounded-2xl border border-indigo-500/20 bg-indigo-950/20 backdrop-blur-md p-4 sm:p-5 flex items-start gap-3.5 shadow-lg shadow-indigo-950/30">
-          <div className="h-9 w-9 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 mt-0.5">
+        <section className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4 sm:p-5 flex items-start gap-3.5 shadow-sm">
+          <div className="h-9 w-9 rounded-xl bg-blue-100 text-[#0053FF] flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
             <ShieldCheck className="h-5 w-5" />
           </div>
-          <div className="space-y-1 text-xs sm:text-sm text-slate-300">
-            <p className="font-semibold text-white">Privacy First Architecture</p>
-            <p className="text-slate-400 text-xs leading-relaxed">
+          <div className="space-y-1 text-xs sm:text-sm text-slate-700">
+            <p className="font-bold text-slate-900">Privacy First Architecture</p>
+            <p className="text-slate-600 text-xs leading-relaxed">
               Your probe selfies are processed in-memory using deep learning (Dlib ResNet-34 metric embeddings).
               They are never written to disk, never saved to the database, and are discarded immediately after searching.
             </p>
@@ -540,32 +540,32 @@ function AttendeeSearchContent() {
         </section>
 
         {/* 3-Angle Selfie Capture & Upload Card */}
-        <section className="rounded-3xl border border-slate-800/90 bg-slate-900/60 backdrop-blur-xl p-6 sm:p-8 space-y-8 shadow-2xl">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
+        <section className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 space-y-8 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
             <div>
               <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-indigo-400" />
-                <h2 className="text-lg sm:text-xl font-bold text-white">
+                <Sparkles className="h-5 w-5 text-[#0053FF]" />
+                <h2 className="text-lg sm:text-xl font-black text-slate-900">
                   3-Angle Facial Search
                 </h2>
-                <span className="text-[10px] font-mono bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+                <span className="text-[10px] font-mono font-bold bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-full border border-emerald-200">
                   {totalCapturedAngles}/3 Angles Ready
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-slate-400 mt-1">
+              <p className="text-xs sm:text-sm text-slate-500 mt-1">
                 For each angle, you can either <strong>click a live selfie</strong> or <strong>upload an image</strong>.
               </p>
             </div>
 
             {/* Mode Switcher */}
-            <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800/80 self-start sm:self-auto">
+            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 self-start sm:self-auto">
               <button
                 type="button"
                 onClick={() => setActiveTab("guided")}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
                   activeTab === "guided"
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-                    : "text-slate-400 hover:text-slate-200"
+                    ? "bg-[#0053FF] text-white shadow-md shadow-[#0053FF]/20"
+                    : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 <Compass className="h-3.5 w-3.5" />
@@ -574,10 +574,10 @@ function AttendeeSearchContent() {
               <button
                 type="button"
                 onClick={() => setActiveTab("batch")}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
                   activeTab === "batch"
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-                    : "text-slate-400 hover:text-slate-200"
+                    ? "bg-[#0053FF] text-white shadow-md shadow-[#0053FF]/20"
+                    : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 <UploadCloud className="h-3.5 w-3.5" />
@@ -592,20 +592,20 @@ function AttendeeSearchContent() {
             /* ============================================================ */
             <div className="space-y-6">
               {/* Top Guided Camera Launcher Banner */}
-              <div className="rounded-2xl border border-indigo-500/30 bg-gradient-to-r from-indigo-950/40 via-purple-950/30 to-slate-950 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="rounded-2xl border border-blue-200/80 bg-gradient-to-r from-blue-50 via-indigo-50/50 to-amber-50/30 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="space-y-1">
-                  <span className="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-[#0053FF] flex items-center gap-1.5">
                     <Camera className="h-4 w-4" />
                     Interactive Camera Wizard
                   </span>
-                  <p className="text-xs text-slate-300 leading-relaxed">
+                  <p className="text-xs text-slate-600 leading-relaxed">
                     Step through Front → Left 45° → Right 45° with live alignment guides in one seamless flow.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => openCameraForAngle(angleSlots.front.file ? (angleSlots.left.file ? "right" : "left") : "front")}
-                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-lg shadow-indigo-600/25 shrink-0"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#0053FF] hover:bg-[#0047db] text-white text-xs font-bold transition-all shadow-md shadow-[#0053FF]/25 shrink-0"
                 >
                   <Camera className="h-4 w-4" />
                   <span>Launch Camera Wizard</span>
@@ -624,45 +624,45 @@ function AttendeeSearchContent() {
                       key={angleKey}
                       className={`relative rounded-3xl p-5 border flex flex-col justify-between transition-all ${
                         hasPhoto
-                          ? "border-emerald-500/40 bg-emerald-950/10 shadow-lg shadow-emerald-950/20"
-                          : "border-slate-800 bg-slate-950/80 hover:border-slate-700"
+                          ? "border-emerald-300 bg-emerald-50/40 shadow-sm"
+                          : "border-slate-200/90 bg-slate-50/50 hover:border-slate-300 hover:bg-slate-50"
                       }`}
                     >
                       {/* Card Header */}
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700/60 font-semibold">
+                          <span className="text-[10px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-700 font-bold">
                             {slot.badge}
                           </span>
                           {hasPhoto && (
-                            <span className="text-[11px] font-mono text-emerald-400 flex items-center gap-1">
-                              <CheckCircle2 className="h-3.5 w-3.5" />
+                            <span className="text-[11px] font-mono text-emerald-700 font-bold flex items-center gap-1">
+                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                               Captured
                             </span>
                           )}
                         </div>
 
                         <div>
-                          <h3 className="text-base font-bold text-white">{slot.title}</h3>
-                          <p className="text-xs text-slate-400 mt-0.5">{slot.description}</p>
+                          <h3 className="text-base font-bold text-slate-900">{slot.title}</h3>
+                          <p className="text-xs text-slate-500 mt-0.5">{slot.description}</p>
                         </div>
                       </div>
 
                       {/* Card Body: Preview or Selection Buttons */}
                       <div className="my-4">
                         {hasPhoto ? (
-                          <div className="relative aspect-square w-full rounded-2xl overflow-hidden border border-emerald-500/40 bg-black group">
+                          <div className="relative aspect-square w-full rounded-2xl overflow-hidden border border-emerald-300 bg-slate-100 group shadow-sm">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={slot.previewUrl!}
                               alt={slot.title}
                               className="w-full h-full object-cover"
                             />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity gap-2">
+                            <div className="absolute inset-0 bg-slate-900/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity gap-2">
                               <button
                                 type="button"
                                 onClick={() => openCameraForAngle(angleKey)}
-                                className="h-9 w-9 rounded-xl bg-slate-900/90 text-white hover:bg-indigo-600 flex items-center justify-center transition-colors shadow-lg"
+                                className="h-9 w-9 rounded-xl bg-white text-slate-700 hover:text-white hover:bg-[#0053FF] flex items-center justify-center transition-colors shadow-lg"
                                 title="Retake Live Selfie"
                               >
                                 <RotateCcw className="h-4 w-4" />
@@ -673,7 +673,7 @@ function AttendeeSearchContent() {
                                   setTargetSlotUpload(angleKey);
                                   slotFileRef.current?.click();
                                 }}
-                                className="h-9 w-9 rounded-xl bg-slate-900/90 text-white hover:bg-indigo-600 flex items-center justify-center transition-colors shadow-lg"
+                                className="h-9 w-9 rounded-xl bg-white text-slate-700 hover:text-white hover:bg-[#0053FF] flex items-center justify-center transition-colors shadow-lg"
                                 title="Upload Different File"
                               >
                                 <UploadCloud className="h-4 w-4" />
@@ -681,7 +681,7 @@ function AttendeeSearchContent() {
                               <button
                                 type="button"
                                 onClick={() => clearSlot(angleKey)}
-                                className="h-9 w-9 rounded-xl bg-slate-900/90 text-white hover:bg-rose-600 flex items-center justify-center transition-colors shadow-lg"
+                                className="h-9 w-9 rounded-xl bg-white text-rose-600 hover:text-white hover:bg-rose-600 flex items-center justify-center transition-colors shadow-lg"
                                 title="Remove Angle"
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -691,15 +691,15 @@ function AttendeeSearchContent() {
                         ) : (
                           <div className="space-y-3">
                             {/* Pose guidance silhouette */}
-                            <div className="relative aspect-[4/3] w-full rounded-2xl border border-dashed border-slate-800 bg-slate-900/40 flex flex-col items-center justify-center p-3 text-center">
+                            <div className="relative aspect-[4/3] w-full rounded-2xl border border-dashed border-slate-300 bg-white flex flex-col items-center justify-center p-3 text-center shadow-inner">
                               <div
-                                className={`w-12 h-14 rounded-[45%] border-2 border-indigo-400/50 bg-indigo-500/10 flex items-center justify-center transition-transform ${
+                                className={`w-12 h-14 rounded-[45%] border-2 border-[#0053FF]/40 bg-blue-50 flex items-center justify-center transition-transform ${
                                   angleKey === "left" ? "-rotate-12" : angleKey === "right" ? "rotate-12" : ""
                                 }`}
                               >
-                                <Compass className="h-5 w-5 text-indigo-400" />
+                                <Compass className="h-5 w-5 text-[#0053FF]" />
                               </div>
-                              <span className="text-[11px] text-slate-300 mt-2 font-medium">
+                              <span className="text-[11px] text-slate-600 mt-2 font-medium">
                                 {slot.guidePrompt}
                               </span>
                             </div>
@@ -709,7 +709,7 @@ function AttendeeSearchContent() {
                               <button
                                 type="button"
                                 onClick={() => openCameraForAngle(angleKey)}
-                                className="py-2.5 px-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-md shadow-indigo-600/25 group"
+                                className="py-2.5 px-2 rounded-xl bg-[#0053FF] hover:bg-[#0047db] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#0053FF]/20 group"
                                 title="Click live selfie using camera"
                               >
                                 <Camera className="h-4 w-4 group-hover:scale-110 transition-transform" />
@@ -722,10 +722,10 @@ function AttendeeSearchContent() {
                                   setTargetSlotUpload(angleKey);
                                   slotFileRef.current?.click();
                                 }}
-                                className="py-2.5 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700/60 text-slate-200 text-xs font-medium flex items-center justify-center gap-1.5 transition-all"
+                                className="py-2.5 px-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm"
                                 title="Upload photo file from device"
                               >
-                                <UploadCloud className="h-4 w-4 text-slate-400" />
+                                <UploadCloud className="h-4 w-4 text-slate-500" />
                                 <span>Upload File</span>
                               </button>
                             </div>
@@ -735,11 +735,11 @@ function AttendeeSearchContent() {
 
                       {/* Card Footer Actions when photo present */}
                       {hasPhoto && (
-                        <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px]">
+                        <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-[11px]">
                           <button
                             type="button"
                             onClick={() => openCameraForAngle(angleKey)}
-                            className="text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1"
+                            className="text-[#0053FF] hover:underline font-bold flex items-center gap-1"
                           >
                             <Camera className="h-3 w-3" />
                             <span>Retake live</span>
@@ -750,7 +750,7 @@ function AttendeeSearchContent() {
                               setTargetSlotUpload(angleKey);
                               slotFileRef.current?.click();
                             }}
-                            className="text-slate-400 hover:text-slate-200 flex items-center gap-1"
+                            className="text-slate-600 hover:text-slate-900 font-medium flex items-center gap-1"
                           >
                             <UploadCloud className="h-3 w-3" />
                             <span>Upload file</span>
@@ -767,7 +767,7 @@ function AttendeeSearchContent() {
             /* TAB 2: MULTI-PHOTO BATCH DROP                                 */
             /* ============================================================ */
             <div className="space-y-6">
-              <label className="w-full rounded-3xl border-2 border-dashed border-slate-700/70 hover:border-indigo-500 bg-slate-950/60 p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all group">
+              <label className="w-full rounded-3xl border-2 border-dashed border-slate-300 hover:border-[#0053FF] bg-slate-50/60 p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all group">
                 <input
                   type="file"
                   multiple
@@ -775,14 +775,14 @@ function AttendeeSearchContent() {
                   onChange={handleBatchFiles}
                   className="hidden"
                 />
-                <div className="h-14 w-14 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center mb-3 group-hover:scale-110 group-hover:bg-indigo-500/20 transition-all">
+                <div className="h-14 w-14 rounded-2xl bg-blue-50 border border-blue-200 text-[#0053FF] flex items-center justify-center mb-3 group-hover:scale-110 group-hover:bg-blue-100 transition-all shadow-sm">
                   <UploadCloud className="h-7 w-7" />
                 </div>
-                <span className="text-sm font-semibold text-white">Drop Multiple Photos of Yourself</span>
-                <span className="text-xs text-slate-400 mt-1">
+                <span className="text-sm font-bold text-slate-900">Drop Multiple Photos of Yourself</span>
+                <span className="text-xs text-slate-500 mt-1">
                   Upload 1 to 5 photos with different angles, expressions, or candid shots (JPG, PNG, WebP)
                 </span>
-                <span className="mt-4 text-[11px] font-mono text-indigo-400 bg-indigo-500/10 px-3.5 py-1.5 rounded-full border border-indigo-500/20">
+                <span className="mt-4 text-[11px] font-mono font-bold text-[#0053FF] bg-blue-50 px-3.5 py-1.5 rounded-full border border-blue-200 shadow-sm">
                   Select Multiple Files
                 </span>
               </label>
@@ -793,7 +793,7 @@ function AttendeeSearchContent() {
                   {batchFiles.map((item, idx) => (
                     <div
                       key={idx}
-                      className="relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-900 aspect-square group"
+                      className="relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 aspect-square group shadow-sm"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
@@ -804,13 +804,13 @@ function AttendeeSearchContent() {
                       <button
                         type="button"
                         onClick={() => removeBatchFile(idx)}
-                        className="absolute top-2 right-2 h-7 w-7 rounded-full bg-slate-900/80 text-white hover:bg-rose-600 flex items-center justify-center transition-colors"
+                        className="absolute top-2 right-2 h-7 w-7 rounded-full bg-white/90 text-rose-600 hover:bg-rose-600 hover:text-white flex items-center justify-center transition-colors shadow-md"
                         title="Remove photo"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
                       <div className="absolute bottom-2 left-2">
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-black/70 text-slate-200">
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-white/90 text-slate-700 shadow-sm font-bold">
                           Angle #{idx + 1}
                         </span>
                       </div>
@@ -822,14 +822,14 @@ function AttendeeSearchContent() {
           )}
 
           {/* Tolerance Slider & Search Trigger */}
-          <div className="pt-4 border-t border-slate-800/80 space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-950/50 p-4 rounded-2xl border border-slate-800/60">
+          <div className="pt-4 border-t border-slate-100 space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
               <div className="flex items-center gap-2">
-                <Sliders className="h-4 w-4 text-indigo-400" />
+                <Sliders className="h-4 w-4 text-[#0053FF]" />
                 <div>
-                  <span className="text-xs font-semibold text-slate-200">Face Match Sensitivity</span>
-                  <p className="text-[11px] text-slate-400">
-                    High-Precision Mode ({tolerance.toFixed(2)}) — Strict matching for frontal &amp; angled shots (zero other people)
+                  <span className="text-xs font-bold text-slate-900">Face Match Sensitivity</span>
+                  <p className="text-[11px] text-slate-500">
+                    High-Precision Mode ({tolerance.toFixed(2)}) — Strict matching for frontal &amp; angled shots
                   </p>
                 </div>
               </div>
@@ -841,17 +841,17 @@ function AttendeeSearchContent() {
                   step="0.01"
                   value={tolerance}
                   onChange={(e) => setTolerance(parseFloat(e.target.value))}
-                  className="w-36 accent-indigo-500 cursor-pointer"
+                  className="w-36 accent-[#0053FF] cursor-pointer"
                 />
-                <span className="text-xs font-mono font-bold text-indigo-400 w-10 text-right">
+                <span className="text-xs font-mono font-black text-[#0053FF] w-10 text-right">
                   {tolerance.toFixed(2)}
                 </span>
               </div>
             </div>
 
             {searchError && (
-              <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 flex items-center gap-3 text-rose-300 text-xs">
-                <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
+              <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 flex items-center gap-3 text-rose-700 text-xs font-medium">
+                <AlertCircle className="h-4 w-4 shrink-0 text-rose-500" />
                 <span>{searchError}</span>
               </div>
             )}
@@ -861,16 +861,16 @@ function AttendeeSearchContent() {
                 type="button"
                 onClick={handleSearch}
                 disabled={totalProbesCount === 0 || searching}
-                className="w-full sm:w-auto min-w-[280px] flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold text-sm transition-all shadow-xl shadow-indigo-600/25 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-indigo-500/40 hover:scale-[1.01]"
+                className="w-full sm:w-auto min-w-[280px] flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-2xl bg-[#0053FF] hover:bg-[#0047db] text-white font-black text-sm transition-all shadow-xl shadow-[#0053FF]/25 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.01]"
               >
                 {searching ? (
                   <>
-                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    <RefreshCw className="h-4 w-4 animate-spin text-[#FCAA02]" />
                     <span>Analyzing {totalProbesCount} Angle Probe(s)...</span>
                   </>
                 ) : (
                   <>
-                    <Search className="h-4 w-4" />
+                    <Search className="h-4 w-4 text-[#FCAA02]" />
                     <span>
                       Search with {totalProbesCount > 0 ? `${totalProbesCount} Probe Angle${totalProbesCount > 1 ? "s" : ""}` : "Selfie"}
                     </span>
@@ -884,22 +884,22 @@ function AttendeeSearchContent() {
         {/* Search Results Display */}
         {searchResponse && (
           <section className="space-y-6 pt-2">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2.5">
-                  <CheckCircle2 className="h-6 w-6 text-emerald-400" />
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-2.5">
+                  <CheckCircle2 className="h-6 w-6 text-emerald-600" />
                   <span>
                     Found {searchResponse.total_results} Photo{searchResponse.total_results === 1 ? "" : "s"}
                   </span>
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   Matched across {searchResponse.faces_detected_in_selfie} probe facial vector(s) with high-precision identity verification
                 </p>
               </div>
 
               {searchResponse.total_results > 0 && (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono text-slate-400 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800">
+                  <span className="text-xs font-mono font-bold text-slate-600 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-sm">
                     Showing top {searchResponse.results.length} matches
                   </span>
                 </div>
@@ -908,14 +908,14 @@ function AttendeeSearchContent() {
 
             {searchResponse.total_results === 0 ? (
               /* Empty State */
-              <div className="rounded-3xl border border-slate-800/80 bg-slate-900/40 p-12 text-center space-y-4">
-                <div className="h-14 w-14 rounded-2xl bg-slate-800 text-slate-400 flex items-center justify-center mx-auto">
+              <div className="rounded-3xl border border-slate-200/90 bg-white p-12 text-center space-y-4 shadow-sm">
+                <div className="h-14 w-14 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mx-auto">
                   <Search className="h-7 w-7" />
                 </div>
-                <h3 className="text-base font-bold text-white">No Matching Photos Found</h3>
-                <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+                <h3 className="text-base font-bold text-slate-900">No Matching Photos Found</h3>
+                <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
                   We couldn&apos;t find any photos with a matching facial vector at tolerance {tolerance.toFixed(2)}.
-                  Try capturing all 3 angles (Front, Left, Right) or adjusting the sensitivity slider above to 0.60–0.65.
+                  Try capturing all 3 angles (Front, Left, Right) or adjusting the sensitivity slider above to 0.50–0.52.
                 </p>
               </div>
             ) : (
@@ -928,10 +928,10 @@ function AttendeeSearchContent() {
                   return (
                     <div
                       key={photo.photo_id}
-                      className="group relative rounded-2xl overflow-hidden border border-slate-800/80 bg-slate-900 hover:border-indigo-500/60 transition-all hover:shadow-xl hover:shadow-indigo-500/10 flex flex-col"
+                      className="group relative rounded-2xl overflow-hidden border border-slate-200/90 bg-white hover:border-[#0053FF]/60 transition-all hover:shadow-xl shadow-sm flex flex-col"
                     >
                       {/* Image container */}
-                      <div className="relative aspect-square w-full overflow-hidden bg-slate-950">
+                      <div className="relative aspect-square w-full overflow-hidden bg-slate-100">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={api.getPhotoDownloadUrl(photo.photo_id)}
@@ -942,12 +942,12 @@ function AttendeeSearchContent() {
 
                         {/* Top Badges */}
                         <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between pointer-events-none">
-                          <span className="text-[10px] font-mono font-bold flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-950/85 text-emerald-300 border border-emerald-500/40 backdrop-blur-md shadow-md">
-                            <CheckCircle2 className="h-3 w-3 text-emerald-400" />
+                          <span className="text-[10px] font-mono font-bold flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/95 text-emerald-700 border border-emerald-200 backdrop-blur-md shadow-sm">
+                            <CheckCircle2 className="h-3 w-3 text-emerald-600" />
                             Verified
                           </span>
                           {isGroup && (
-                            <span className="text-[10px] font-mono flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-950/85 text-amber-300 border border-amber-500/40 backdrop-blur-md shadow-md">
+                            <span className="text-[10px] font-mono font-bold flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/95 text-amber-700 border border-amber-200 backdrop-blur-md shadow-sm">
                               <Users className="h-3 w-3" />
                               Group
                             </span>
@@ -958,22 +958,22 @@ function AttendeeSearchContent() {
                         <button
                           type="button"
                           onClick={() => setActivePhoto(photo)}
-                          className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-[2px]"
+                          className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-[2px]"
                           title="Preview full size"
                         >
-                          <div className="h-10 w-10 rounded-full bg-white/20 text-white flex items-center justify-center backdrop-blur-md hover:scale-110 transition-transform">
+                          <div className="h-10 w-10 rounded-full bg-white text-slate-800 flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
                             <Maximize2 className="h-5 w-5" />
                           </div>
                         </button>
                       </div>
 
                       {/* Card Footer */}
-                      <div className="p-3 bg-slate-900/90 border-t border-slate-800/80 flex items-center justify-between gap-2">
+                      <div className="p-3 bg-white border-t border-slate-100 flex items-center justify-between gap-2">
                         <div className="min-w-0">
-                          <p className="text-xs text-slate-200 font-medium truncate" title={photo.original_filename}>
+                          <p className="text-xs text-slate-800 font-bold truncate" title={photo.original_filename}>
                             {photo.original_filename}
                           </p>
-                          <p className="text-[10px] font-mono text-slate-500">
+                          <p className="text-[10px] font-mono text-slate-400">
                             Dist: {photo.best_distance !== null ? photo.best_distance.toFixed(3) : "N/A"}
                           </p>
                         </div>
@@ -981,7 +981,7 @@ function AttendeeSearchContent() {
                         <a
                           href={api.getPhotoDownloadUrl(photo.photo_id)}
                           download={photo.original_filename}
-                          className="h-8 w-8 rounded-lg bg-slate-800 hover:bg-indigo-600 text-slate-300 hover:text-white flex items-center justify-center shrink-0 transition-colors"
+                          className="h-8 w-8 rounded-xl bg-slate-100 hover:bg-[#0053FF] text-slate-600 hover:text-white flex items-center justify-center shrink-0 transition-colors shadow-sm"
                           title="Download photograph"
                         >
                           <Download className="h-3.5 w-3.5" />
@@ -1000,39 +1000,39 @@ function AttendeeSearchContent() {
       {/* REALTIME CAMERA SNAP MODAL (FOR ALL 3 PROBE ANGLES)          */}
       {/* ============================================================ */}
       {cameraModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="relative max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 flex flex-col items-center space-y-4 shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="relative max-w-md w-full bg-white border border-slate-200 rounded-3xl p-6 flex flex-col items-center space-y-4 shadow-2xl">
             {/* Modal Header */}
-            <div className="w-full flex items-center justify-between border-b border-slate-800 pb-3">
+            <div className="w-full flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
-                <Camera className="h-4 w-4 text-indigo-400" />
-                <span className="text-sm font-bold text-white">
+                <Camera className="h-4 w-4 text-[#0053FF]" />
+                <span className="text-sm font-bold text-slate-900">
                   Capturing: {angleSlots[cameraTargetAngle].title}
                 </span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-50 text-[#0053FF] font-bold">
                   {angleSlots[cameraTargetAngle].badge}
                 </span>
               </div>
               <button
                 type="button"
                 onClick={closeCameraModal}
-                className="h-8 w-8 rounded-full bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center transition-colors"
+                className="h-8 w-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-colors"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
             {/* Angle Selection Tabs inside Camera */}
-            <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 w-full justify-between">
+            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 w-full justify-between">
               {(["front", "left", "right"] as AngleType[]).map((aKey) => (
                 <button
                   key={aKey}
                   type="button"
                   onClick={() => setCameraTargetAngle(aKey)}
-                  className={`flex-1 py-1.5 px-2 text-xs font-semibold rounded-lg transition-all ${
+                  className={`flex-1 py-1.5 px-2 text-xs font-bold rounded-lg transition-all ${
                     cameraTargetAngle === aKey
-                      ? "bg-indigo-600 text-white shadow"
-                      : "text-slate-400 hover:text-slate-200"
+                      ? "bg-[#0053FF] text-white shadow"
+                      : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
                   {angleSlots[aKey].title}
@@ -1041,11 +1041,11 @@ function AttendeeSearchContent() {
             </div>
 
             {/* Live Camera Viewfinder */}
-            <div className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden border border-slate-800 bg-black flex flex-col items-center justify-center">
+            <div className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden border border-slate-200 bg-black flex flex-col items-center justify-center shadow-inner">
               {cameraError ? (
                 <div className="p-6 text-center space-y-3">
-                  <AlertCircle className="h-8 w-8 text-amber-400 mx-auto" />
-                  <p className="text-xs text-slate-300 leading-relaxed">{cameraError}</p>
+                  <AlertCircle className="h-8 w-8 text-amber-500 mx-auto" />
+                  <p className="text-xs text-slate-600 leading-relaxed">{cameraError}</p>
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-2">
                     <button
                       type="button"
@@ -1053,7 +1053,7 @@ function AttendeeSearchContent() {
                         closeCameraModal();
                         triggerNativeCamera(cameraTargetAngle);
                       }}
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/20"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#0053FF] hover:bg-[#0047db] text-white text-xs font-bold shadow-md shadow-[#0053FF]/20"
                     >
                       <Camera className="h-4 w-4" />
                       <span>Open Device Camera</span>
@@ -1065,9 +1065,9 @@ function AttendeeSearchContent() {
                         setTargetSlotUpload(cameraTargetAngle);
                         slotFileRef.current?.click();
                       }}
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold border border-slate-200 shadow-sm"
                     >
-                      <UploadCloud className="h-4 w-4 text-slate-400" />
+                      <UploadCloud className="h-4 w-4 text-slate-500" />
                       <span>Upload File Instead</span>
                     </button>
                   </div>
@@ -1084,12 +1084,12 @@ function AttendeeSearchContent() {
                   {/* Pose Guidance Frame */}
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div
-                      className={`w-52 h-64 rounded-[48%] border-2 border-dashed shadow-[0_0_40px_rgba(99,102,241,0.25)] animate-pulse transition-all ${
+                      className={`w-52 h-64 rounded-[48%] border-2 border-dashed shadow-[0_0_40px_rgba(0,83,255,0.3)] animate-pulse transition-all ${
                         cameraTargetAngle === "front"
-                          ? "border-indigo-400/80"
+                          ? "border-[#0053FF]"
                           : cameraTargetAngle === "left"
-                          ? "border-cyan-400/80 -rotate-8"
-                          : "border-violet-400/80 rotate-8"
+                          ? "border-sky-400 -rotate-8"
+                          : "border-amber-400 rotate-8"
                       }`}
                     />
                   </div>
@@ -1108,7 +1108,7 @@ function AttendeeSearchContent() {
 
                   {/* Angle Guideline Badge */}
                   <div className="absolute top-3 left-3 z-10">
-                    <span className="text-[11px] font-mono px-3 py-1 rounded-full bg-slate-900/80 backdrop-blur-md text-indigo-300 border border-indigo-500/30">
+                    <span className="text-[11px] font-mono px-3 py-1 rounded-full bg-white/90 backdrop-blur-md text-[#0053FF] border border-blue-200 font-bold shadow-sm">
                       {angleSlots[cameraTargetAngle].guidePrompt}
                     </span>
                   </div>
@@ -1122,9 +1122,9 @@ function AttendeeSearchContent() {
                       className="h-16 w-16 rounded-full bg-white hover:scale-105 active:scale-95 transition-all p-1.5 shadow-2xl flex items-center justify-center group disabled:opacity-50"
                       title={`Snap ${angleSlots[cameraTargetAngle].title}`}
                     >
-                      <div className="w-full h-full rounded-full border-2 border-slate-900 group-hover:bg-indigo-600 transition-colors" />
+                      <div className="w-full h-full rounded-full border-2 border-slate-900 group-hover:bg-[#0053FF] transition-colors" />
                     </button>
-                    <span className="text-[11px] font-mono text-slate-300 drop-shadow-md">
+                    <span className="text-[11px] font-mono text-white drop-shadow-md font-bold">
                       Tap circle to snap {angleSlots[cameraTargetAngle].title}
                     </span>
                   </div>
@@ -1134,7 +1134,7 @@ function AttendeeSearchContent() {
 
             {/* Bottom Alternative: Upload File for this angle */}
             <div className="w-full flex items-center justify-between pt-1">
-              <span className="text-xs text-slate-400">Prefer a photo from your gallery?</span>
+              <span className="text-xs text-slate-500">Prefer a photo from your gallery?</span>
               <button
                 type="button"
                 onClick={() => {
@@ -1142,7 +1142,7 @@ function AttendeeSearchContent() {
                   setTargetSlotUpload(cameraTargetAngle);
                   slotFileRef.current?.click();
                 }}
-                className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1"
+                className="text-xs text-[#0053FF] hover:underline font-bold flex items-center gap-1"
               >
                 <UploadCloud className="h-3.5 w-3.5" />
                 <span>Upload {angleSlots[cameraTargetAngle].title}</span>
@@ -1154,12 +1154,12 @@ function AttendeeSearchContent() {
 
       {/* Fullscreen Photo Lightbox Modal */}
       {activePhoto && (
-        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center">
             <button
               type="button"
               onClick={() => setActivePhoto(null)}
-              className="absolute -top-12 right-0 h-9 w-9 rounded-full bg-slate-800 text-white hover:bg-slate-700 flex items-center justify-center transition-colors"
+              className="absolute -top-12 right-0 h-9 w-9 rounded-full bg-white text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors shadow-lg"
               title="Close modal"
             >
               <X className="h-5 w-5" />
@@ -1169,20 +1169,20 @@ function AttendeeSearchContent() {
             <img
               src={api.getPhotoDownloadUrl(activePhoto.photo_id)}
               alt={activePhoto.original_filename}
-              className="max-h-[75vh] w-auto object-contain rounded-2xl shadow-2xl border border-slate-800"
+              className="max-h-[75vh] w-auto object-contain rounded-2xl shadow-2xl border border-slate-200"
             />
 
-            <div className="mt-4 flex items-center justify-between w-full max-w-xl bg-slate-900/90 px-5 py-3 rounded-2xl border border-slate-800 text-xs">
+            <div className="mt-4 flex items-center justify-between w-full max-w-xl bg-white px-5 py-3 rounded-2xl border border-slate-200 text-xs shadow-xl">
               <div>
-                <p className="font-semibold text-white">{activePhoto.original_filename}</p>
-                <p className="text-slate-400 font-mono text-[11px]">
+                <p className="font-bold text-slate-900">{activePhoto.original_filename}</p>
+                <p className="text-slate-500 font-mono text-[11px]">
                   Status: Verified Match • Distance: {activePhoto.best_distance?.toFixed(3)}
                 </p>
               </div>
               <a
                 href={api.getPhotoDownloadUrl(activePhoto.photo_id)}
                 download={activePhoto.original_filename}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-colors shadow-lg shadow-indigo-600/30"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#0053FF] hover:bg-[#0047db] text-white font-bold transition-colors shadow-md shadow-[#0053FF]/20"
               >
                 <Download className="h-4 w-4" />
                 <span>Download Photo</span>
@@ -1199,7 +1199,7 @@ export default function AttendeeSearchPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400 font-mono text-sm">
+        <div className="min-h-screen bg-slate-50/70 flex items-center justify-center text-slate-500 font-medium text-sm">
           Loading Event...
         </div>
       }
