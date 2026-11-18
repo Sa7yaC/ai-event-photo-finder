@@ -1,19 +1,15 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { BentoProblem } from "@/components/BentoProblem";
+import { HowItWorks } from "@/components/HowItWorks";
 import { FlipWords } from "@/components/ui/flip-words";
-import { GlowingEffect } from "@/components/ui/glowing-effect";
 import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
 import {
-  Sparkles,
-  ShieldCheck,
-  ArrowRight,
-  Activity,
+  ChevronDown,
   RefreshCw,
   ExternalLink,
-  Check,
-  Lock
 } from "lucide-react";
 
 interface HealthData {
@@ -46,6 +42,34 @@ const HERO_PHOTOS = [
   "https://images.pexels.com/photos/38079943/pexels-photo-38079943.jpeg?auto=compress&cs=tinysrgb&w=600",
 ];
 
+const FAQ_ITEMS = [
+  {
+    question: "Do attendees need to create an account to find their photos?",
+    lead: "No.",
+    rest: "Attendees can access the event through a shared link, upload a selfie, and discover their photos without creating an account.",
+  },
+  {
+    question: "How accurate is the AI photo matching?",
+    lead: "Highly accurate.",
+    rest: "Our AI analyzes facial features to find matches across different lighting conditions, angles, and expressions. A clear, well-lit selfie helps deliver better results.",
+  },
+  {
+    question: "Are my photos and facial data secure?",
+    lead: "Yes.",
+    rest: "We prioritize data privacy and security, with controlled access to event galleries and secure handling of uploaded data.",
+  },
+  {
+    question: "Can I use this platform for different types of events?",
+    lead: "Yes.",
+    rest: "Our platform works for weddings, birthday parties, college festivals, corporate events, concerts, and more.",
+  },
+  {
+    question: "How long will my event photos be available?",
+    lead: "It depends on your plan.",
+    rest: "Each plan offers a specific photo-gallery availability period. Once that period expires, photos are removed according to the plan's retention policy.",
+  },
+];
+
 // Single photo slot with smooth crossfade on refresh, 1px blue border, and customizable framing
 function HeroPhotoSlot({
   photoUrl,
@@ -68,8 +92,10 @@ function HeroPhotoSlot({
 
   useEffect(() => {
     if (photoUrl !== current) {
+      /* eslint-disable react-hooks/set-state-in-effect -- the crossfade starts when the slot photo changes */
       setNext(photoUrl);
       setIsCrossfading(true);
+      /* eslint-enable react-hooks/set-state-in-effect */
       const timer = setTimeout(() => {
         setCurrent(photoUrl);
         setNext(null);
@@ -82,7 +108,7 @@ function HeroPhotoSlot({
   return (
     <div style={style} className="shrink-0 transition-transform duration-300">
       <div
-        className={`${animationClass} relative overflow-hidden rounded-2xl border border-[#0053FF]/25 shadow-[0_2px_8px_rgba(255,255,255,0.3)] bg-white/10 group cursor-pointer hover:scale-105 transition-all duration-300 ${className}`}
+        className={`${animationClass} relative overflow-hidden rounded-2xl border border-[#0053FF]/25 shadow-[0_2px_8px_rgba(255,255,255,0.3)] bg-white/10 ${className}`}
       >
         <img
           src={current}
@@ -109,7 +135,7 @@ export default function Home() {
   const [loading, setLoading] = useState<boolean>(true);
   const [latency, setLatency] = useState<number | null>(null);
   const [lastChecked, setLastChecked] = useState<string | null>(null);
-  const [showTelemetry, setShowTelemetry] = useState<boolean>(false);
+  const [showTelemetry] = useState<boolean>(false);
   const [isScrolled, setIsScrolled] = useState<boolean>(false);
   const [photoOffset, setPhotoOffset] = useState<number>(0);
 
@@ -139,6 +165,8 @@ export default function Home() {
   };
 
   useEffect(() => {
+    // The initial health probe sets the loading state on mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchHealth();
 
     const handleScroll = () => {
@@ -340,7 +368,7 @@ export default function Home() {
                     className="btn-3d-amber text-white font-extrabold text-xs sm:text-base lg:text-lg px-6 py-2.5 sm:px-8 sm:py-3.5 lg:px-10 lg:py-4 tracking-normal whitespace-nowrap"
                     maskClassName="bg-[#FCAA02]"
                   >
-                    <span>Get Started</span>
+                    <span>Start Sharing</span>
                   </HoverBorderGradient>
                 </div>
 
@@ -387,494 +415,175 @@ export default function Home() {
 
               </div>
 
-              {/* Trust and Privacy Indicator (No Shadow) */}
-              {/* <div className="flex items-center justify-center gap-2 text-xs font-semibold text-white pt-10 sm:pt-12">
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span>100% In-Memory Biometric Privacy • Zero Selfie Storage On Disk</span>
-              </div> */}
             </div>
 
           </div>
         </section>
 
         {/* =========================================================================
-            SECTION 2: USER-FACING BENTO GRID (Glowing Effect Border in Brand Palette)
+            SECTION 2: BENTO -- THE PHOTO SHARING PROBLEM, TOLD IN SIX TILES
             ========================================================================= */}
-        <section id="bento" className="max-w-7xl mx-auto px-4 sm:px-6 py-28">
-
-          {/* Section Header */}
-          <div className="text-center max-w-3xl mx-auto space-y-4 mb-14">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight">
-              Why Sharext?
-            </h2>
-            <p className="text-slate-600 text-base sm:text-lg">
-              aren't you bored of!
-            </p>
-          </div>
-
-          {/* THE BENTO GRID */}
-          <div className="space-y-6">
-
-            {/* UPPER ROW: Card 1 (Left Large) & Cards 2 & 3 (Right Stack) */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-              {/* CARD 1 WRAPPER: "Find Your Photos with AI" (Spans 7 cols on lg) */}
-              <div className="lg:col-span-7 relative rounded-[28px] p-1.5 border border-slate-200/90 bg-slate-50/60 shadow-sm transition-all">
-                <GlowingEffect
-                  blur={0}
-                  borderWidth={2}
-                  spread={48}
-                  glow={true}
-                  disabled={false}
-                  proximity={80}
-                  inactiveZone={0.01}
-                />
-                <div
-                  className="relative rounded-[22px] overflow-hidden text-white shadow-xl min-h-[440px] flex flex-col justify-end p-8 sm:p-10 group bg-[#0053FF] bg-cover bg-center border border-blue-600/40 h-full"
-                  style={{ backgroundImage: "url('/bento/bento-bg-card1.jpg?v=seamless')" }}
-                >
-
-                  {/* Real Event Photo Focused on the Person Holding the Phone, with wide seamless alpha mask */}
-                  <div
-                    className="absolute right-0 top-0 bottom-0 w-full sm:w-[68%] lg:w-[70%] z-0 overflow-hidden pointer-events-none"
-                    style={{
-                      WebkitMaskImage: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.05) 12%, rgba(0,0,0,0.5) 35%, rgba(0,0,0,0.9) 60%, black 80%)",
-                      maskImage: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.05) 12%, rgba(0,0,0,0.5) 35%, rgba(0,0,0,0.9) 60%, black 80%)"
-                    }}
-                  >
-                    <img
-                      src="/bento/bento-find-photos.jpg"
-                      alt="Find Photos with AI"
-                      className="w-full h-full object-cover object-[52%_35%] opacity-90 group-hover:opacity-95 transition-opacity duration-700"
-                    />
-                  </div>
-
-                  {/* Left Content positioned at the bottom, directly above the 42 photos indicator, restricted to <= half the card */}
-                  <div className="relative z-10 max-w-[48%] space-y-3.5">
-                    <h3 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-[1.12]">
-                      Find Your Photos with AI
-                    </h3>
-                    <p className="text-blue-100 text-sm sm:text-base leading-relaxed">
-                      Take a selfie or short video and instantly get all your event photos.
-                    </p>
-
-                    {/* Indicator: "✓ 42 photos found" */}
-                    <div className="pt-2">
-                      <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#FCAA02] text-slate-950 font-extrabold text-sm sm:text-base shadow-xl shadow-black/25 hover:scale-105 transition-transform cursor-pointer">
-                        <Check className="w-5 h-5 stroke-[3]" />
-                        <span>42 photos found</span>
-                      </div>
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-
-              {/* RIGHT STACK: Cards 2 & 3 (Spans 5 cols on lg) */}
-              <div className="lg:col-span-5 flex flex-col gap-6 justify-between">
-
-                {/* CARD 2 WRAPPER: "Smart Group Sharing" */}
-                <div className="relative rounded-[28px] p-1.5 border border-slate-200/90 bg-slate-50/60 shadow-sm transition-all flex-1">
-                  <GlowingEffect
-                    blur={0}
-                    borderWidth={2}
-                    spread={40}
-                    glow={true}
-                    disabled={false}
-                    proximity={70}
-                    inactiveZone={0.01}
-                  />
-                  <div
-                    className="relative rounded-[22px] p-6 sm:p-7 border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-[#FCAA02]/50 transition-all overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-5 min-h-[205px] bg-white bg-cover bg-center h-full"
-                    style={{ backgroundImage: "url('/bento/bento-bg-card2.jpg?v=seamless')" }}
-                  >
-
-                    {/* Left Content */}
-                    <div className="space-y-1.5 relative z-10 flex-1 pr-2">
-                      <h3 className="text-2xl font-extrabold text-[#0053FF]">
-                        Smart Group Sharing
-                      </h3>
-                      <p className="text-slate-600 text-sm leading-relaxed">
-                        Share photos with specific friends, groups, or the whole event.
-                      </p>
-                    </div>
-
-                    {/* Right Visual: Stacked Group Pills with Real Photos */}
-                    <div className="space-y-2 relative z-10 w-full sm:w-[210px] shrink-0">
-
-                      {/* Pill 1 */}
-                      <div className="flex items-center justify-between gap-2.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 shadow-sm">
-                        <div className="flex items-center gap-2">
-                          <img
-                            src="/bento/bento-group-dinner.jpg"
-                            alt="Friends"
-                            className="w-8 h-8 rounded-lg object-cover"
-                          />
-                          <div className="text-left">
-                            <div className="text-xs font-bold text-slate-800">Friends</div>
-                            <div className="text-[10px] text-slate-500 font-medium">56 members</div>
-                          </div>
-                        </div>
-                        <div className="w-5 h-5 rounded-full bg-[#FCAA02] text-slate-950 flex items-center justify-center shrink-0">
-                          <Check className="w-3.5 h-3.5 stroke-[3]" />
-                        </div>
-                      </div>
-
-                      {/* Pill 2 */}
-                      <div className="flex items-center justify-between gap-2.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 shadow-sm">
-                        <div className="flex items-center gap-2">
-                          <img
-                            src="/bento/bento-group-dinner.jpg"
-                            alt="College Team"
-                            className="w-8 h-8 rounded-lg object-cover object-left"
-                          />
-                          <div className="text-left">
-                            <div className="text-xs font-bold text-slate-800">College Team</div>
-                            <div className="text-[10px] text-slate-500 font-medium">78 members</div>
-                          </div>
-                        </div>
-                        <div className="w-5 h-5 rounded-full bg-[#FCAA02] text-slate-950 flex items-center justify-center shrink-0">
-                          <Check className="w-3.5 h-3.5 stroke-[3]" />
-                        </div>
-                      </div>
-
-                      {/* Pill 3 */}
-                      <div className="flex items-center justify-between gap-2.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 shadow-sm">
-                        <div className="flex items-center gap-2">
-                          <img
-                            src="/bento/bento-group-dinner.jpg"
-                            alt="Organizing Crew"
-                            className="w-8 h-8 rounded-lg object-cover object-right"
-                          />
-                          <div className="text-left">
-                            <div className="text-xs font-bold text-slate-800">Organizing Crew</div>
-                            <div className="text-[10px] text-slate-500 font-medium">24 members</div>
-                          </div>
-                        </div>
-                        <div className="w-5 h-5 rounded-full bg-[#FCAA02] text-slate-950 flex items-center justify-center shrink-0">
-                          <Check className="w-3.5 h-3.5 stroke-[3]" />
-                        </div>
-                      </div>
-
-                    </div>
-
-                  </div>
-                </div>
-
-                {/* CARD 3 WRAPPER: "AI Photo Selection" */}
-                <div className="relative rounded-[28px] p-1.5 border border-slate-200/90 bg-slate-50/60 shadow-sm transition-all flex-1">
-                  <GlowingEffect
-                    blur={0}
-                    borderWidth={2}
-                    spread={40}
-                    glow={true}
-                    disabled={false}
-                    proximity={70}
-                    inactiveZone={0.01}
-                  />
-                  <div
-                    className="relative rounded-[22px] p-6 sm:p-7 text-white shadow-xl overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-5 min-h-[205px] group bg-[#0053FF] bg-cover bg-center border border-blue-600/30 h-full"
-                    style={{ backgroundImage: "url('/bento/bento-bg-card3.jpg?v=seamless')" }}
-                  >
-
-                    {/* Left Content */}
-                    <div className="space-y-1.5 relative z-10 flex-1 pr-2">
-                      <h3 className="text-2xl font-extrabold text-white">
-                        AI Photo Selection
-                      </h3>
-                      <p className="text-blue-100 text-sm leading-relaxed">
-                        Our AI picks the best and most relevant photos for you.
-                      </p>
-                    </div>
-
-                    {/* Right Visual: Stacked White-Bordered Celebration Photo Covering Space */}
-                    <div className="relative z-10 shrink-0 w-full sm:w-[240px] h-[145px] flex items-center justify-end -mr-2">
-                      {/* Background stacked card 1 */}
-                      <div className="absolute w-[185px] h-[120px] rounded-2xl bg-white/20 border border-white/30 -rotate-6 pointer-events-none"></div>
-                      {/* Background stacked card 2 */}
-                      <div className="absolute w-[190px] h-[125px] rounded-2xl bg-white/40 border border-white/50 rotate-8 pointer-events-none"></div>
-                      {/* Main front photo card */}
-                      <div className="relative w-[195px] h-[130px] rounded-2xl overflow-hidden p-1.5 bg-white shadow-2xl rotate-2 group-hover:rotate-0 transition-transform z-10">
-                        <img
-                          src="/bento/bento-sparklers.jpg"
-                          alt="AI Photo Selection"
-                          className="w-full h-full object-cover rounded-xl"
-                          loading="lazy"
-                        />
-                      </div>
-                    </div>
-
-                  </div>
-                </div>
-
-              </div>
-
-            </div>
-
-            {/* LOWER ROW: 3 Compact-Height Feature Cards with GlowingEffect & Zero Dead Space */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-              {/* CARD 4 WRAPPER: "Automatic Photo Organization" */}
-              <div className="relative rounded-[28px] p-1.5 border border-slate-200/90 bg-slate-50/60 shadow-sm transition-all h-full">
-                <GlowingEffect
-                  blur={0}
-                  borderWidth={2}
-                  spread={40}
-                  glow={true}
-                  disabled={false}
-                  proximity={70}
-                  inactiveZone={0.01}
-                />
-                <div
-                  className="relative rounded-[22px] p-6 sm:p-7 border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-[#FCAA02]/50 transition-all overflow-hidden flex flex-row items-center justify-between min-h-[220px] bg-white bg-cover bg-center h-full"
-                  style={{ backgroundImage: "url('/bento/bento-bg-card4.jpg?v=seamless')" }}
-                >
-
-                  <div className="w-[48%] z-10 pr-2 space-y-1.5">
-                    <h3 className="text-xl font-extrabold text-[#0053FF] leading-tight">
-                      Automatic Photo Organization
-                    </h3>
-                    <p className="text-slate-600 text-xs sm:text-sm leading-relaxed">
-                      We detect faces and organize your event photos, so you don&apos;t have to.
-                    </p>
-                  </div>
-
-                  {/* Right Visual: Prominent Group Photo Taking Up Right Half with no dead space */}
-                  <div className="w-[52%] relative flex justify-end items-center h-full -mr-3 sm:-mr-2 z-10">
-                    <div className="relative w-full max-w-[240px] h-[145px] sm:h-[155px] rounded-2xl overflow-hidden p-1.5 bg-white border border-slate-200 shadow-2xl rotate-2 hover:rotate-0 transition-transform">
-                      <img
-                        src="/bento/bento-group-dinner.jpg"
-                        alt="Automatic Organization"
-                        className="w-full h-full object-cover rounded-xl"
-                        loading="lazy"
-                      />
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-
-              {/* CARD 5 WRAPPER: "Private & Secure" */}
-              <div className="relative rounded-[28px] p-1.5 border border-slate-200/90 bg-slate-50/60 shadow-sm transition-all h-full">
-                <GlowingEffect
-                  blur={0}
-                  borderWidth={2}
-                  spread={40}
-                  glow={true}
-                  disabled={false}
-                  proximity={70}
-                  inactiveZone={0.01}
-                />
-                <div
-                  className="relative rounded-[22px] p-6 sm:p-7 border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-[#0053FF]/40 transition-all overflow-hidden flex flex-row items-center justify-between min-h-[220px] bg-white bg-cover bg-center h-full"
-                  style={{ backgroundImage: "url('/bento/bento-bg-card5.jpg?v=seamless')" }}
-                >
-
-                  <div className="w-[55%] z-10 pr-2 space-y-1.5">
-                    <h3 className="text-xl font-extrabold text-[#0053FF] leading-tight">
-                      Private &amp; Secure
-                    </h3>
-                    <p className="text-slate-600 text-xs sm:text-sm leading-relaxed">
-                      Your photos stay within your event and are shared only with invited people.
-                    </p>
-                  </div>
-
-                  {/* Right Visual: 3D Blue Padlock Icon */}
-                  <div className="w-[45%] relative flex justify-end items-center h-full pr-1 sm:pr-4 z-10">
-                    <img
-                      src="/bento/bento-lock-3d.png"
-                      alt="Private & Secure 3D Padlock"
-                      className="w-24 sm:w-28 md:w-32 h-auto object-contain drop-shadow-2xl transition-transform duration-300 hover:scale-105"
-                      loading="lazy"
-                    />
-                  </div>
-
-                </div>
-              </div>
-
-              {/* CARD 6 WRAPPER: "Built for Any Occasion" */}
-              <div className="relative rounded-[28px] p-1.5 border border-slate-200/90 bg-slate-50/60 shadow-sm transition-all h-full">
-                <GlowingEffect
-                  blur={0}
-                  borderWidth={2}
-                  spread={40}
-                  glow={true}
-                  disabled={false}
-                  proximity={70}
-                  inactiveZone={0.01}
-                />
-                <div
-                  className="relative rounded-[22px] p-6 sm:p-7 border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-[#FCAA02]/50 transition-all overflow-hidden flex flex-row items-center justify-between min-h-[220px] bg-white bg-cover bg-center h-full"
-                  style={{ backgroundImage: "url('/bento/bento-bg-card6.jpg?v=seamless')" }}
-                >
-
-                  <div className="w-[48%] z-20 pr-2 space-y-1.5">
-                    <h3 className="text-xl font-extrabold text-[#0053FF] leading-tight">
-                      Built for Any Occasion
-                    </h3>
-                    <p className="text-slate-600 text-xs sm:text-sm leading-relaxed">
-                      From college fests and weddings to corporate events — share memories effortlessly.
-                    </p>
-                  </div>
-
-                  {/* Right Visual: TWO LARGE OVERLAPPING PHOTOS FILLING THE ENTIRE RIGHT SIDE WITHOUT COVERING TEXT */}
-                  <div className="w-[52%] relative flex justify-end items-center h-full min-h-[150px] -mr-3 sm:-mr-2 z-10">
-                    <div className="relative w-full h-[155px]">
-                      {/* Top Concert Photo (Fills upper-right) */}
-                      <div className="absolute top-0 right-0 w-[150px] sm:w-[170px] h-[100px] sm:h-[110px] rounded-xl overflow-hidden p-1 bg-white border border-slate-200/90 shadow-xl rotate-6 hover:rotate-0 transition-transform z-10">
-                        <img
-                          src="/bento/bento-concert.jpg"
-                          alt="College Fest / Concert"
-                          className="w-full h-full object-cover rounded-lg"
-                          loading="lazy"
-                        />
-                      </div>
-                      {/* Bottom Wedding Photo (Shifted right so it never overlaps the text "college fests") */}
-                      <div className="absolute bottom-0 right-2 sm:right-4 w-[150px] sm:w-[170px] h-[100px] sm:h-[110px] rounded-xl overflow-hidden p-1 bg-white border border-slate-200/90 shadow-2xl -rotate-3 hover:rotate-0 transition-transform z-20">
-                        <img
-                          src="/bento/bento-wedding.jpg"
-                          alt="Wedding Occasion"
-                          className="w-full h-full object-cover rounded-lg"
-                          loading="lazy"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-
-            </div>
-
-          </div>
-
-        </section>
+        <BentoProblem />
 
         {/* =========================================================================
-            SECTION 3: HOW NEXTSHARE WORKS (3-Step Walkthrough Inspired by Cardboard.ai)
+            SECTION 3: HOW IT WORKS -- THREE ANIMATED STEP DEMOS
             ========================================================================= */}
-        <section id="how-it-works" className="border-t border-slate-200/80 bg-slate-50/60 py-28">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-16">
-
-            <div className="text-center max-w-2xl mx-auto space-y-4">
-              {/* <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-mono font-bold bg-[#0053FF]/10 text-[#0053FF]">
-                <span>SEAMLESS WORKFLOW</span>
-              </div> */}
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight">
-                How Sharext Works in 3 Steps
-              </h2>
-              <p className="text-slate-600 text-base">
-                From photographer batch ingestion to instant attendee retrieval in seconds.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-
-              {/* Step 1 */}
-              <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm space-y-4 hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 rounded-2xl bg-[#0053FF] text-white flex items-center justify-center font-extrabold text-lg shadow-md shadow-[#0053FF]/20">
-                  1
-                </div>
-                <h3 className="text-xl font-bold text-slate-900">Organizers Upload Gallery</h3>
-                <p className="text-slate-600 text-sm leading-relaxed">
-                  Event photographers batch-upload hundreds or thousands of photos. Deduplication eliminates duplicate files instantly.
-                </p>
-              </div>
-
-              {/* Step 2 */}
-              <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm space-y-4 hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 rounded-2xl bg-[#FCAA02] text-slate-900 flex items-center justify-center font-extrabold text-lg shadow-md shadow-[#FCAA02]/20">
-                  2
-                </div>
-                <h3 className="text-xl font-bold text-slate-900">Attendee Snaps a Selfie</h3>
-                <p className="text-slate-600 text-sm leading-relaxed">
-                  Attendees scan the event QR code and snap a selfie. The image is processed in RAM only — never saved to disk.
-                </p>
-              </div>
-
-              {/* Step 3 */}
-              <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm space-y-4 hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 rounded-2xl bg-[#0053FF] text-white flex items-center justify-center font-extrabold text-lg shadow-md shadow-[#0053FF]/20">
-                  3
-                </div>
-                <h3 className="text-xl font-bold text-slate-900">Instant Facial Matching</h3>
-                <p className="text-slate-600 text-sm leading-relaxed">
-                  AI facial recognition scans all faces in seconds, delivering your personal memories ready for high-resolution download.
-                </p>
-              </div>
-
-            </div>
-
-          </div>
-        </section>
+        <HowItWorks />
 
         {/* =========================================================================
-            SECTION 4: FINAL CALL TO ACTION (Generous Spacing, Clean Light Canvas)
+            SECTION 4: FREQUENTLY ASKED QUESTIONS
             ========================================================================= */}
-        <section className="py-28 max-w-7xl mx-auto px-4 sm:px-6 text-center">
-          <div className="rounded-3xl bg-[#0053FF] text-white p-12 sm:p-16 shadow-2xl shadow-[#0053FF]/30 space-y-8 relative overflow-hidden">
+        <section id="faq" className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-24">
+          <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
+            Frequently asked questions
+          </h2>
 
-            {/* Background accent circles */}
-            <div className="absolute top-0 right-0 w-80 h-80 bg-[#FCAA02]/20 rounded-full blur-3xl pointer-events-none"></div>
-            <div className="absolute bottom-0 left-0 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
-
-            <div className="relative z-10 max-w-2xl mx-auto space-y-4">
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight">
-                Ready to find your event memories in seconds?
-              </h2>
-              <p className="text-indigo-100 text-base sm:text-lg">
-                Create an event album or explore our instant facial recognition search with Sharext.
-              </p>
-            </div>
-
-            <div className="relative z-10 flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
-              <Link
-                href="/events/new"
-                className="w-full sm:w-auto px-8 py-4 rounded-xl font-bold text-base bg-[#FCAA02] text-slate-900 hover:bg-[#e99c00] transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <span>Update Yourself</span>
-                <ArrowRight className="w-5 h-5" />
-              </Link>
-              <Link
-                href="/dashboard"
-                className="w-full sm:w-auto px-8 py-4 rounded-xl font-bold text-base bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <span>Open Dashboard</span>
-              </Link>
-            </div>
-
+          <div className="mt-10 sm:mt-12">
+            {FAQ_ITEMS.map((item) => (
+              <details key={item.question} className="faq-item border-b border-slate-200">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-5 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0053FF] sm:py-6 [&::-webkit-details-marker]:hidden">
+                  <span className="font-balimo text-lg font-semibold leading-snug text-slate-900 sm:text-xl">
+                    {item.question}
+                  </span>
+                  <ChevronDown className="faq-chevron h-5 w-5 shrink-0 text-slate-400 transition-transform duration-200" />
+                </summary>
+                <p className="max-w-3xl pb-6 text-sm leading-relaxed text-slate-600 sm:text-base">
+                  <strong className="font-semibold text-slate-900">{item.lead}</strong>{" "}
+                  {item.rest}
+                </p>
+              </details>
+            ))}
           </div>
         </section>
 
       </main>
 
-      {/* Footer with Nextshare Logo */}
-      <footer className="border-t border-slate-200 bg-slate-50 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-6 text-sm text-slate-500">
-          <div className="flex items-center gap-3">
-            <img
-              src="/nextshare-logo.png?v=sharext"
-              alt="Sharext Logo"
-              className="h-8 w-auto object-contain"
-            />
-            <span className="text-slate-300">|</span>
-            <span>AI Event Photo Retrieval Platform</span>
+      {/* Footer: navigation over white, then the landscape wordmark band */}
+      <footer className="bg-white">
+        <div className="mx-auto max-w-7xl px-4 pb-10 pt-16 sm:px-6 sm:pt-20">
+          <div className="grid gap-10 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.9fr)]">
+            <div>
+              <Link href="/" className="inline-flex items-center">
+                <img
+                  src="/sharext-sidebar-logo.png?v=black-v4"
+                  alt="Sharext"
+                  className="h-8 w-auto object-contain"
+                />
+              </Link>
+              <p className="mt-4 max-w-xs text-sm leading-relaxed text-slate-600">
+                AI event photo retrieval for everyone who was there.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
+              <div>
+                <h2 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  Product
+                </h2>
+                <ul className="mt-3 space-y-2.5 text-sm">
+                  <li>
+                    <a href="#bento" className="text-slate-600 transition-colors hover:text-[#0053FF]">
+                      Features
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#how-it-works" className="text-slate-600 transition-colors hover:text-[#0053FF]">
+                      Workflow
+                    </a>
+                  </li>
+                  <li>
+                    <Link href="/photos" className="text-slate-600 transition-colors hover:text-[#0053FF]">
+                      Photo library
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+
+              <div>
+                <h2 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  Workspace
+                </h2>
+                <ul className="mt-3 space-y-2.5 text-sm">
+                  <li>
+                    <Link href="/dashboard" className="text-slate-600 transition-colors hover:text-[#0053FF]">
+                      Dashboard
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/events/new" className="text-slate-600 transition-colors hover:text-[#0053FF]">
+                      Create an event
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/profile" className="text-slate-600 transition-colors hover:text-[#0053FF]">
+                      Profile
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+
+              <div>
+                <h2 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  Resources
+                </h2>
+                <ul className="mt-3 space-y-2.5 text-sm">
+                  <li>
+                    <a
+                      href={`${apiUrl}/api/v1/docs`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-slate-600 transition-colors hover:text-[#0053FF]"
+                    >
+                      <span>API docs</span>
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#faq" className="text-slate-600 transition-colors hover:text-[#0053FF]">
+                      FAQ
+                    </a>
+                  </li>
+                  <li>
+                    <Link href="/settings" className="text-slate-600 transition-colors hover:text-[#0053FF]">
+                      Settings
+                    </Link>
+                  </li>
+                  <li>
+                    <a href="#hero" className="text-slate-600 transition-colors hover:text-[#0053FF]">
+                      Overview
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-8">
-            <a href="#hero" className="hover:text-[#0053FF] transition-colors">Overview</a>
-            <a href="#bento" className="hover:text-[#0053FF] transition-colors">Features</a>
-            <a href="#how-it-works" className="hover:text-[#0053FF] transition-colors">Workflow</a>
-            <Link href="/dashboard" className="hover:text-[#0053FF] transition-colors">Dashboard</Link>
+
+          <div className="mt-10 flex flex-col gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-slate-500">© 2026 Sharext.</p>
             <a
-              href={`${apiUrl}/api/v1/docs`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-[#0053FF] transition-colors flex items-center gap-1 font-mono text-xs"
+              href="#hero"
+              className="text-xs font-semibold text-slate-600 transition-colors hover:text-[#0053FF]"
             >
-              <span>API Docs</span>
-              <ExternalLink className="h-3.5 w-3.5" />
+              Back to top ↑
             </a>
           </div>
+        </div>
+
+        <div className="relative aspect-[2048/683] w-full overflow-hidden">
+          <img
+            src="/footer-sharext.jpg"
+            alt=""
+            aria-hidden="true"
+            width={2048}
+            height={683}
+            loading="lazy"
+            decoding="async"
+            className="absolute inset-0 h-full w-full object-cover"
+            style={{
+              maskImage: "linear-gradient(to bottom, transparent 0%, #000 12%)",
+              WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, #000 12%)",
+            }}
+          />
         </div>
       </footer>
 

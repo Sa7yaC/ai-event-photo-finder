@@ -16,9 +16,9 @@ export const metadata: Metadata = {
   title: "Sharext — AI Event Photo Retrieval Platform",
   description: "Find and share your event photos in seconds using AI facial recognition and vector similarity search.",
   icons: {
-    icon: "/nextshare-logo-3d.png?v=3d",
-    shortcut: "/nextshare-logo-3d.png?v=3d",
-    apple: "/nextshare-logo-3d.png?v=3d",
+    icon: "/sharext-symbol.png",
+    shortcut: "/sharext-symbol.png",
+    apple: "/sharext-symbol.png",
   },
 };
 

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Sharext Dashboard - Review Report</title>
+	<script src="https://cdn.tailwindcss.com"></script>
+	<style>
+		body { font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+		.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+		.report-section { border: 1px solid #222226; background: #0a0a0b; position: relative; }
+		.corner-box { position: absolute; width: 20px; height: 20px; border: 1px solid #222226; background: #000; }
+	</style>
+</head>
+<body class="bg-black text-[#fafafa]">
+	<main class="mx-auto w-full max-w-6xl px-5 py-8 md:px-10 md:py-12">
+		<header class="report-section mb-8 p-6 md:p-8">
+			<div class="corner-box left-0 top-0 -translate-x-1/2 -translate-y-1/2"></div>
+			<div class="corner-box right-0 top-0 translate-x-1/2 -translate-y-1/2"></div>
+			<div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+				<div>
+					<div class="mono mb-2 text-xs tracking-widest text-[#666]">// REVIEW</div>
+					<h1 class="text-4xl font-bold tracking-tight md:text-6xl">Sharext Dashboard</h1>
+				</div>
+				<div class="mono text-left text-xs text-[#666] md:text-right">
+					<div>COMMANDCODE REPORT</div>
+					<div class="text-[#444]">2026-11-17</div>
+				</div>
+			</div>
+		</header>
+
+		<section class="report-section mb-8 p-6 md:p-8">
+			<div class="corner-box left-0 top-0 -translate-x-1/2 -translate-y-1/2"></div>
+			<div class="corner-box right-0 top-0 translate-x-1/2 -translate-y-1/2"></div>
+			<div class="grid gap-8 md:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+				<div>
+					<div class="mono mb-2 text-xs tracking-widest text-[#666]">// OVERALL</div>
+					<div class="text-6xl font-bold tracking-tight md:text-7xl">24</div>
+					<div class="mt-1 text-lg text-[#666]">/ 50</div>
+					<div class="mt-4 inline-flex border border-[#f43f5e]/30 bg-[#f43f5e]/10 px-3 py-1 text-sm text-[#f43f5e]">BLOCK</div>
+				</div>
+				<div>
+					<div class="mono mb-3 text-xs tracking-widest text-[#666]">// FIRST IMPRESSION</div>
+					<p class="text-sm leading-6 text-[#a0a0a0]">A real product with live data, brand blue, and Balimo. But the list is a wall of identical cards repeating ACTIVE, and the joined events are staged data in polished cards.</p>
+					<p class="mt-4 text-sm leading-6 text-[#fbbf24]">The direction is sound. Composition and the dialog are what fail.</p>
+				</div>
+			</div>
+		</section>
+
+		<section class="report-section mb-8 p-6 md:p-8">
+			<div class="mono mb-6 text-xs tracking-widest text-[#666]">// LENS SCORES</div>
+			<div class="overflow-x-auto">
+				<table class="w-full min-w-[640px] border-collapse text-sm">
+					<thead>
+						<tr class="border-b border-[#222226] text-left mono text-xs text-[#666]">
+							<th class="py-3 pr-4 font-normal">#</th>
+							<th class="py-3 pr-4 font-normal">LENS</th>
+							<th class="py-3 pr-4 font-normal">SCORE</th>
+							<th class="py-3 font-normal">READ</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr class="border-b border-[#1a1a1e]"><td class="py-3 pr-4 text-[#555]">1</td><td class="py-3 pr-4">First impression</td><td class="py-3 pr-4 text-[#fbbf24]">5/10</td><td class="py-3 text-[#a0a0a0]">Real product, but the card wall is the memory</td></tr>
+						<tr class="border-b border-[#1a1a1e]"><td class="py-3 pr-4 text-[#555]">2</td><td class="py-3 pr-4">Hierarchy</td><td class="py-3 pr-4 text-[#f43f5e]">4/10</td><td class="py-3 text-[#a0a0a0]">Header works; everything below is equal weight</td></tr>
+						<tr class="border-b border-[#1a1a1e]"><td class="py-3 pr-4 text-[#555]">3</td><td class="py-3 pr-4">Color voice</td><td class="py-3 pr-4 text-[#fbbf24]">6/10</td><td class="py-3 text-[#a0a0a0]">Earned brand blue; two rogue gradients</td></tr>
+						<tr class="border-b border-[#1a1a1e]"><td class="py-3 pr-4 text-[#555]">4</td><td class="py-3 pr-4">Type voice</td><td class="py-3 pr-4 text-[#fbbf24]">5/10</td><td class="py-3 text-[#a0a0a0]">Balimo carries it; chrome type fails at 2.5:1</td></tr>
+						<tr><td class="py-3 pr-4 text-[#555]">5</td><td class="py-3 pr-4">Interaction feel</td><td class="py-3 pr-4 text-[#f43f5e]">4/10</td><td class="py-3 text-[#a0a0a0]">Dialog, error recovery, silent copy feedback</td></tr>
+					</tbody>
+				</table>
+			</div>
+		</section>
+
+		<section class="report-section mb-8 p-6 md:p-8">
+			<div class="mono mb-6 text-xs tracking-widest text-[#666]">// PRIORITY FINDINGS</div>
+			<div class="space-y-5">
+				<article class="border border-[#2a1d22] bg-[#110b0d] p-5">
+					<div class="mono mb-2 text-xs text-[#f43f5e]">HIGH · LAYOUT</div>
+					<h2 class="mb-2 text-lg font-semibold">17 equal cards, no scan path</h2>
+					<p class="mb-3 text-sm leading-6 text-[#a0a0a0]"><span class="mono text-[#888]">dashboard/page.tsx:262-329</span> — no date, count, or recency. Every card repeats the same status and actions.</p>
+					<div class="border-l border-[#fbbf24] pl-4 text-sm leading-6 text-[#fbbf24]">FIX: bordered ledger with a header row and compact rows.</div>
+				</article>
+				<article class="border border-[#2a1d22] bg-[#110b0d] p-5">
+					<div class="mono mb-2 text-xs text-[#f43f5e]">HIGH · ACCESSIBILITY</div>
+					<h2 class="mb-2 text-lg font-semibold">A modal that is not a dialog</h2>
+					<p class="mb-3 text-sm leading-6 text-[#a0a0a0]"><span class="mono text-[#888]">dashboard/page.tsx:332-393; Sidebar.tsx:550-614</span> — Tab escapes, Escape does nothing, the field has no label, the close has no name.</p>
+					<div class="border-l border-[#fbbf24] pl-4 text-sm leading-6 text-[#fbbf24]">FIX: one shared dialog with focus management and a visible label.</div>
+				</article>
+				<article class="border border-[#2a1d22] bg-[#110b0d] p-5">
+					<div class="mono mb-2 text-xs text-[#f43f5e]">HIGH · ACCESSIBILITY</div>
+					<h2 class="mb-2 text-lg font-semibold">Chrome text at 2.5:1</h2>
+					<p class="mb-3 text-sm leading-6 text-[#a0a0a0]"><span class="mono text-[#888]">Sidebar.tsx:228, 288, 400</span> — 11px slate-400 labels and 10px subtext.</p>
+					<div class="border-l border-[#fbbf24] pl-4 text-sm leading-6 text-[#fbbf24]">FIX: 11px slate-500; delete the redundant subtext.</div>
+				</article>
+			</div>
+		</section>
+
+		<section class="report-section mb-8 p-6 md:p-8">
+			<div class="mono mb-6 text-xs tracking-widest text-[#666]">// RECOMMENDATIONS</div>
+			<div class="grid gap-4 md:grid-cols-2">
+				<article class="border border-[#1f1f24] p-4"><h2 class="mb-2 text-sm font-semibold">1 · Relayout</h2><p class="text-sm leading-6 text-[#a0a0a0]">Replace the grid with a ledger. One surface, header row, rows with name, status, date, actions.</p></article>
+				<article class="border border-[#1f1f24] p-4"><h2 class="mb-2 text-sm font-semibold">2 · A11y</h2><p class="text-sm leading-6 text-[#a0a0a0]">Extract one join dialog with semantics, visible label, focus trap, Escape, 44px controls.</p></article>
+				<article class="border border-[#1f1f24] p-4"><h2 class="mb-2 text-sm font-semibold">3 · Typeset</h2><p class="text-sm leading-6 text-[#a0a0a0]">11px slate-500 chrome floor; h2 event names; remove the duplicate premium subtext.</p></article>
+				<article class="border border-[#1f1f24] p-4"><h2 class="mb-2 text-sm font-semibold">4 · Interaction</h2><p class="text-sm leading-6 text-[#a0a0a0]">Retry on error, aria-current on tabs, live copy confirmation.</p></article>
+			</div>
+		</section>
+
+		<footer class="mono py-8 text-center text-xs tracking-widest text-[#444]">
+			Generated with CommandCode - 2026-11-17
+		</footer>
+	</main>
+</body>
+</html>

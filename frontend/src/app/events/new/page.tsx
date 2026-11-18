@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/lib/api";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { 
   CalendarPlus, 
   ArrowLeft, 
@@ -12,7 +13,8 @@ import {
   Key, 
   Copy, 
   Check, 
-  ArrowRight 
+  ArrowRight,
+  RefreshCw
 } from "lucide-react";
 
 export default function NewEventPage() {
@@ -70,8 +72,8 @@ export default function NewEventPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/70 text-slate-900 flex flex-col font-sans">
-      <main className="flex-1 max-w-2xl w-full mx-auto px-4 sm:px-6 py-10 space-y-6">
+    <DashboardLayout>
+      <main className="max-w-3xl w-full mx-auto px-4 sm:px-8 py-8 space-y-6">
         <Link
           href="/dashboard"
           className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-[#0053FF] transition-colors"
@@ -120,6 +122,9 @@ export default function NewEventPage() {
                   )}
                 </button>
               </div>
+              <p aria-live="polite" className="sr-only">
+                {tokenCopied ? "Organizer token copied" : ""}
+              </p>
             </div>
 
             <button
@@ -143,7 +148,7 @@ export default function NewEventPage() {
             </div>
 
             {error && (
-              <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-sm flex items-center gap-2 font-medium">
+              <div role="alert" className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-sm flex items-center gap-2 font-medium">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <span>{error}</span>
               </div>
@@ -151,56 +156,66 @@ export default function NewEventPage() {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                <label htmlFor="event-name" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Event Name <span className="text-rose-500">*</span>
                 </label>
                 <input
+                  id="event-name"
+                  name="name"
                   type="text"
                   required
                   placeholder="e.g. Wedding Gala 2026, College Fest, Tech Summit"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-[#0053FF] focus:bg-white focus:outline-none text-slate-900 text-sm placeholder:text-slate-400 transition-all shadow-2xs font-medium"
+                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-[#0053FF] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0053FF]/20 text-slate-900 text-base sm:text-sm placeholder:text-slate-400 transition-all shadow-2xs font-medium"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                <label htmlFor="event-date" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Event Date <span className="text-slate-400 font-normal lowercase">(optional)</span>
                 </label>
                 <input
+                  id="event-date"
+                  name="event_date"
                   type="date"
                   value={eventDate}
                   onChange={(e) => setEventDate(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-[#0053FF] focus:bg-white focus:outline-none text-slate-900 text-sm placeholder:text-slate-400 transition-all shadow-2xs font-medium"
+                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-[#0053FF] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0053FF]/20 text-slate-900 text-base sm:text-sm placeholder:text-slate-400 transition-all shadow-2xs font-medium"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                <label htmlFor="event-description" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Description <span className="text-slate-400 font-normal lowercase">(optional)</span>
                 </label>
                 <textarea
+                  id="event-description"
+                  name="description"
                   rows={3}
                   placeholder="Brief context for attendees and photographers..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-[#0053FF] focus:bg-white focus:outline-none text-slate-900 text-sm placeholder:text-slate-400 transition-all shadow-2xs resize-none font-medium"
+                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-[#0053FF] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0053FF]/20 text-slate-900 text-base sm:text-sm placeholder:text-slate-400 transition-all shadow-2xs resize-none font-medium"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-[#0053FF] hover:bg-[#0047db] active:scale-98 text-white font-extrabold text-sm transition-all shadow-xl shadow-[#0053FF]/25 disabled:opacity-50 cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-[#0053FF] hover:bg-[#0047db] active:scale-98 text-white font-extrabold text-sm transition-all shadow-xl shadow-[#0053FF]/25 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
-                <CalendarPlus className="h-4 w-4 text-[#FCAA02]" />
-                <span>{loading ? "Creating Event..." : "Create Event"}</span>
+                {loading ? (
+                  <RefreshCw className="h-4 w-4 animate-spin text-[#FCAA02]" />
+                ) : (
+                  <CalendarPlus className="h-4 w-4 text-[#FCAA02]" />
+                )}
+                <span>Create Event</span>
               </button>
             </form>
           </div>
         )}
       </main>
-    </div>
+    </DashboardLayout>
   );
 }

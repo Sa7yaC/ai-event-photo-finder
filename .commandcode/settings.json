@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Shell(node -e \"const l=require('lucide-react');const want=['MessageCircle','HardDrive','Camera','Share2','X','Bell','Check','Copy','Link2','Download','ArrowUpRight','Users','Images','ImageDown','Smartphone','Lock','Trash2','Send','Plus','Instagram','FolderDown','Clock','ScanFace','Sparkles','ShieldCheck','ChevronLeft','ChevronRight','Globe','FileImage'];want.forEach(n=>console.log(n, typeof l[n]));\")",
+      "powershell",
+      "Shell(npx tsc --noEmit)",
+      "Shell(npx eslint src/app/page.tsx src/components/BentoProblem.tsx)",
+      "Shell(npm:*)",
+      "Shell(agent-browser:*)",
+      "Shell(npx eslint src/components/BentoProblem.tsx 2 >& 1)",
+      "Shell(Select-String:*)",
+      "Shell(Select-Object:*)",
+      "Shell(npx eslint src/components/BentoProblem.tsx src/app/page.tsx)",
+      "Shell(if:*)",
+      "Shell({:*)",
+      "Shell(node -e \"const l=require('lucide-react');['Send','UserCheck','UserRoundCheck','BadgeCheck','Images','X','Check','ArrowLeft','ArrowRight','Bell','Copy','Download','HardDrive','ImageDown','Link2','MessageCircle','ScanFace','ShieldCheck','Users','Share2'].forEach(n=>console.log(n, typeof l[n]));\")",
+      "Shell(npx eslint src/components/BentoProblem.tsx)",
+      "Shell(node -e const fs=require('fs');const p='src/components/BentoProblem.tsx';const L=fs.readFileSync(p,'utf8').split(/\\r?\\n/);const pats=[/function Tile/,/p-\\[5px\\]/,/aren&apos;t you bored/,/Sharing photos is broken/,/text-\\[8px\\]/,/text-\\[8\\.5px\\]/,/text-\\[9px\\]/,/text-\\[9\\.5px\\]/,/ImageDown/,/h-5 min-w/,/Before · 55/,/After · 4/,/loading=/,/Share once/,/Your gallery stays clean/,/55 photos/];L.forEach((l,i)=>{if(pats.some(r=>r.test(l)))console.log((i+1)+': '+l.trim().slice(0,140))}))"
+    ],
+    "deny": [],
+    "defaultMode": "default"
+  }
+}

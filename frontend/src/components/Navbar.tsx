@@ -19,9 +19,9 @@ export function Navbar() {
         {/* Sharext Logo */}
         <Link href="/" className="flex items-center gap-2.5 group">
           <img
-            src="/sharext-logo.png?v=blue"
+            src="/sharext-logo-dark.png"
             alt="Sharext Logo"
-            className="h-9 sm:h-10 w-auto object-contain transition-transform group-hover:scale-110"
+            className="h-8 sm:h-9 w-auto object-contain transition-transform group-hover:scale-105"
           />
         </Link>
 

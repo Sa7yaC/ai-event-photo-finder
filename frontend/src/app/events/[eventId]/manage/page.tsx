@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, Suspense } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { api, EventItem, EventStats, PhotoItem, BatchUploadResponse } from "@/lib/api";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { 
   ArrowLeft, 
   UploadCloud, 
@@ -16,9 +17,7 @@ import {
   AlertCircle, 
   CheckCircle2, 
   Key, 
-  Info,
   Calendar,
-  Layers,
   Clock,
   Sparkles,
   ExternalLink
@@ -48,8 +47,10 @@ function EventManageContent() {
   useEffect(() => {
     const cached = api.getStoredOrganizerToken(eventId);
     if (cached) {
+      /* eslint-disable react-hooks/set-state-in-effect -- initialize the editor from the stored organizer token */
       setOrganizerToken(cached);
       setTokenInput(cached);
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [eventId]);
 
@@ -84,6 +85,8 @@ function EventManageContent() {
   };
 
   useEffect(() => {
+    // The initial load mirrors the current event/token into the editor.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventId, organizerToken]);
@@ -142,7 +145,7 @@ function EventManageContent() {
       const st = await api.getEventStats(eventId);
       setStats(st);
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Failed to delete photograph");
+      setError(err instanceof Error ? err.message : "Failed to delete photograph");
     }
   };
 
@@ -181,8 +184,8 @@ function EventManageContent() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/70 text-slate-900 flex flex-col font-sans">
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-8 space-y-8">
+    <DashboardLayout activeEventId={eventId}>
+      <main className="max-w-6xl w-full mx-auto px-4 sm:px-8 py-8 space-y-8">
         {/* Breadcrumb & Navigation */}
         <div className="flex items-center justify-between">
           <Link
@@ -195,12 +198,32 @@ function EventManageContent() {
 
           <button
             onClick={() => loadData()}
-            className="flex items-center gap-1.5 text-xs text-slate-700 hover:text-slate-900 px-3 py-1.5 rounded-xl bg-white border border-slate-200/90 shadow-sm hover:border-slate-300 transition-colors font-medium"
+            disabled={loading}
+            className="flex items-center gap-1.5 text-xs text-slate-700 hover:text-slate-900 px-3 py-1.5 rounded-xl bg-white border border-slate-200/90 shadow-sm hover:border-slate-300 transition-colors font-medium disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin text-[#0053FF]" : ""}`} />
             <span>Refresh</span>
           </button>
         </div>
+
+        {error && (
+          <div
+            role="alert"
+            className="flex flex-col gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <p className="flex items-start gap-2 text-sm text-rose-800">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{error}</span>
+            </p>
+            <button
+              type="button"
+              onClick={() => loadData()}
+              className="shrink-0 rounded-xl border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-700 transition-colors hover:bg-rose-100"
+            >
+              Try again
+            </button>
+          </div>
+        )}
 
         {/* Event Header Banner */}
         {event && (
@@ -226,18 +249,18 @@ function EventManageContent() {
                 )}
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                 <Link
                   href={`/events/${event.slug || event.id}`}
                   target="_blank"
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0053FF] hover:bg-[#0047db] text-white text-xs font-bold transition-all shadow-md shadow-[#0053FF]/20 border border-[#0053FF]"
+                  className="flex w-full items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#0053FF] hover:bg-[#0047db] text-white text-xs font-bold transition-all shadow-md shadow-[#0053FF]/20 border border-[#0053FF] sm:w-auto"
                 >
                   <ExternalLink className="h-4 w-4" />
                   <span>Open Attendee Search</span>
                 </Link>
                 <button
                   onClick={copyShareLink}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all border border-slate-200/90 shadow-sm"
+                  className="flex w-full items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all border border-slate-200/90 shadow-sm sm:w-auto"
                 >
                   {copiedLink ? (
                     <>
@@ -252,6 +275,9 @@ function EventManageContent() {
                   )}
                 </button>
               </div>
+              <p aria-live="polite" className="sr-only">
+                {copiedLink ? "Attendee link copied" : ""}
+              </p>
             </div>
           </div>
         )}
@@ -266,19 +292,26 @@ function EventManageContent() {
             <p className="text-xs text-amber-900/80 leading-relaxed max-w-2xl">
               To upload photographs, browse the gallery, or delete items, enter the Organizer Token provided when this event was created.
             </p>
-            <form onSubmit={handleSaveToken} className="flex gap-2 max-w-lg">
+            <form onSubmit={handleSaveToken} className="flex w-full max-w-lg flex-col gap-2 sm:flex-row">
+              <label htmlFor="organizer-token" className="sr-only">
+                Organizer token
+              </label>
               <input
+                id="organizer-token"
                 type="password"
+                required
+                autoComplete="off"
+                spellCheck={false}
                 placeholder="Paste your organizer_token here..."
                 value={tokenInput}
                 onChange={(e) => setTokenInput(e.target.value)}
-                className="flex-1 px-3.5 py-2 rounded-xl bg-white border border-amber-300 text-xs text-slate-900 focus:outline-none focus:border-[#0053FF] font-mono shadow-inner"
+                className="w-full min-w-0 flex-1 px-3.5 py-2.5 rounded-xl bg-white border border-amber-300 text-base text-slate-900 focus:outline-none focus:border-[#0053FF] focus:ring-2 focus:ring-[#0053FF]/20 font-mono shadow-inner sm:py-2 sm:text-xs"
               />
               <button
                 type="submit"
-                className="px-4 py-2 rounded-xl bg-[#FCAA02] hover:bg-[#e59b02] text-slate-950 font-bold text-xs transition-colors shrink-0 shadow-md"
+                className="w-full shrink-0 px-4 py-2.5 rounded-xl bg-[#FCAA02] hover:bg-[#e59b02] text-slate-950 font-bold text-xs transition-colors shadow-md sm:w-auto sm:py-2"
               >
-                Save & Unlock
+                Save &amp; Unlock
               </button>
             </form>
           </div>
@@ -336,13 +369,22 @@ function EventManageContent() {
 
             {/* Drag & Drop Zone */}
             <div
+              role="button"
+              tabIndex={0}
+              aria-label="Upload photographs"
               onClick={() => fileInputRef.current?.click()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  fileInputRef.current?.click();
+                }
+              }}
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 e.preventDefault();
                 handleFilesSelected(e.dataTransfer.files);
               }}
-              className={`border-2 border-dashed rounded-2xl p-8 sm:p-12 text-center transition-all cursor-pointer ${
+              className={`border-2 border-dashed rounded-2xl p-8 sm:p-12 text-center transition-all cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0053FF] ${
                 uploading
                   ? "border-[#0053FF]/50 bg-blue-50/50 opacity-60 pointer-events-none"
                   : "border-slate-300 hover:border-[#0053FF] hover:bg-blue-50/30"
@@ -482,18 +524,18 @@ function EventManageContent() {
                     </span>
 
                     {/* Hover Actions Overlay */}
-                    <div className="absolute inset-0 bg-slate-900/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                    <div className="absolute inset-0 bg-slate-900/50 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity flex items-center justify-center gap-2 [@media(hover:none)]:opacity-100">
                       <a
                         href={api.getPhotoDownloadUrl(photo.id)}
                         download={photo.original_filename}
-                        className="p-2 rounded-xl bg-white text-slate-700 hover:text-white hover:bg-[#0053FF] shadow-md transition-colors"
+                        className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-slate-700 hover:text-white hover:bg-[#0053FF] shadow-md transition-colors"
                         title="Download original"
                       >
                         <Download className="h-4 w-4" />
                       </a>
                       <button
                         onClick={() => handleDeletePhoto(photo.id)}
-                        className="p-2 rounded-xl bg-white text-rose-600 hover:text-white hover:bg-rose-600 shadow-md transition-colors"
+                        className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-rose-600 hover:text-white hover:bg-rose-600 shadow-md transition-colors"
                         title="Delete photo"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -519,7 +561,7 @@ function EventManageContent() {
           )}
         </div>
       </main>
-    </div>
+    </DashboardLayout>
   );
 }
 

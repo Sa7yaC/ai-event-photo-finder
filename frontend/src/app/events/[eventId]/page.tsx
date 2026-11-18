@@ -106,7 +106,10 @@ function AttendeeSearchContent() {
 
   // File upload input ref & target
   const slotFileRef = useRef<HTMLInputElement>(null);
+  const batchInputRef = useRef<HTMLInputElement>(null);
   const nativeCameraRef = useRef<HTMLInputElement>(null);
+  const lastCameraTriggerRef = useRef<HTMLElement | null>(null);
+  const lastPhotoTriggerRef = useRef<HTMLElement | null>(null);
   const [targetSlotUpload, setTargetSlotUpload] = useState<AngleType>("front");
 
   const triggerNativeCamera = (angle: AngleType) => {
@@ -195,6 +198,7 @@ function AttendeeSearchContent() {
   };
 
   const openCameraForAngle = (angle: AngleType) => {
+    lastCameraTriggerRef.current = document.activeElement as HTMLElement | null;
     setCameraTargetAngle(angle);
     setCameraModalOpen(true);
     startCameraStream();
@@ -203,6 +207,17 @@ function AttendeeSearchContent() {
   const closeCameraModal = () => {
     stopCameraStream();
     setCameraModalOpen(false);
+    requestAnimationFrame(() => lastCameraTriggerRef.current?.focus());
+  };
+
+  const openPhotoPreview = (photo: SelfieSearchResult) => {
+    lastPhotoTriggerRef.current = document.activeElement as HTMLElement | null;
+    setActivePhoto(photo);
+  };
+
+  const closeLightbox = () => {
+    setActivePhoto(null);
+    requestAnimationFrame(() => lastPhotoTriggerRef.current?.focus());
   };
 
   // Flip front/back camera
@@ -212,6 +227,8 @@ function AttendeeSearchContent() {
 
   useEffect(() => {
     if (cameraModalOpen) {
+      // Start/stop the media stream as the camera dialog opens, closes, or flips.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       startCameraStream();
     } else {
       stopCameraStream();
@@ -221,6 +238,49 @@ function AttendeeSearchContent() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cameraModalOpen, facingMode]);
+
+  useEffect(() => {
+    if (!cameraModalOpen && !activePhoto) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        if (cameraModalOpen) closeCameraModal();
+        else closeLightbox();
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      const dialog = document.querySelector<HTMLElement>('[role="dialog"][aria-modal="true"]');
+      if (!dialog) return;
+      const focusable = Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((element) => element.offsetParent !== null);
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cameraModalOpen, activePhoto]);
 
   // Click / Snap photo from live camera
   const handleSnapCamera = () => {
@@ -369,7 +429,9 @@ function AttendeeSearchContent() {
 
   const copyEventLink = () => {
     if (typeof window === "undefined") return;
-    navigator.clipboard.writeText(window.location.href);
+    navigator.clipboard.writeText(window.location.href).catch(() => {
+      // Clipboard access can be blocked; the button still confirms visually.
+    });
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
   };
@@ -452,9 +514,9 @@ function AttendeeSearchContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-8 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5 group">
             <img 
-              src="/nextshare-logo-3d.png?v=3d" 
-              alt="NextShare Logo" 
-              className="h-9 sm:h-10 w-auto object-contain transition-transform group-hover:scale-102" 
+              src="/sharext-logo-dark.png" 
+              alt="Sharext Logo" 
+              className="h-8 sm:h-9 w-auto object-contain transition-transform group-hover:scale-102" 
             />
           </Link>
 
@@ -477,6 +539,9 @@ function AttendeeSearchContent() {
           </div>
         </div>
       </header>
+      <p aria-live="polite" className="sr-only">
+        {copiedLink ? "Event link copied" : ""}
+      </p>
 
       {/* Main Container */}
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-8 space-y-8">
@@ -658,11 +723,11 @@ function AttendeeSearchContent() {
                               alt={slot.title}
                               className="w-full h-full object-cover"
                             />
-                            <div className="absolute inset-0 bg-slate-900/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity gap-2">
+                            <div className="absolute inset-0 bg-slate-900/50 opacity-0 group-hover:opacity-100 focus-within:opacity-100 flex items-center justify-center transition-opacity gap-2 [@media(hover:none)]:opacity-100">
                               <button
                                 type="button"
                                 onClick={() => openCameraForAngle(angleKey)}
-                                className="h-9 w-9 rounded-xl bg-white text-slate-700 hover:text-white hover:bg-[#0053FF] flex items-center justify-center transition-colors shadow-lg"
+                                className="h-11 w-11 rounded-xl bg-white text-slate-700 hover:text-white hover:bg-[#0053FF] flex items-center justify-center transition-colors shadow-lg"
                                 title="Retake Live Selfie"
                               >
                                 <RotateCcw className="h-4 w-4" />
@@ -673,7 +738,7 @@ function AttendeeSearchContent() {
                                   setTargetSlotUpload(angleKey);
                                   slotFileRef.current?.click();
                                 }}
-                                className="h-9 w-9 rounded-xl bg-white text-slate-700 hover:text-white hover:bg-[#0053FF] flex items-center justify-center transition-colors shadow-lg"
+                                className="h-11 w-11 rounded-xl bg-white text-slate-700 hover:text-white hover:bg-[#0053FF] flex items-center justify-center transition-colors shadow-lg"
                                 title="Upload Different File"
                               >
                                 <UploadCloud className="h-4 w-4" />
@@ -681,7 +746,7 @@ function AttendeeSearchContent() {
                               <button
                                 type="button"
                                 onClick={() => clearSlot(angleKey)}
-                                className="h-9 w-9 rounded-xl bg-white text-rose-600 hover:text-white hover:bg-rose-600 flex items-center justify-center transition-colors shadow-lg"
+                                className="h-11 w-11 rounded-xl bg-white text-rose-600 hover:text-white hover:bg-rose-600 flex items-center justify-center transition-colors shadow-lg"
                                 title="Remove Angle"
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -767,8 +832,20 @@ function AttendeeSearchContent() {
             /* TAB 2: MULTI-PHOTO BATCH DROP                                 */
             /* ============================================================ */
             <div className="space-y-6">
-              <label className="w-full rounded-3xl border-2 border-dashed border-slate-300 hover:border-[#0053FF] bg-slate-50/60 p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all group">
+              <label
+                role="button"
+                tabIndex={0}
+                aria-label="Select multiple photos"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    batchInputRef.current?.click();
+                  }
+                }}
+                className="w-full rounded-3xl border-2 border-dashed border-slate-300 hover:border-[#0053FF] bg-slate-50/60 p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0053FF]"
+              >
                 <input
+                  ref={batchInputRef}
                   type="file"
                   multiple
                   accept="image/jpeg,image/jpg,image/pjpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp,.JPG,.JPEG,.PNG,.WEBP"
@@ -839,6 +916,7 @@ function AttendeeSearchContent() {
                   min="0.35"
                   max="0.52"
                   step="0.01"
+                  aria-label="Face match sensitivity"
                   value={tolerance}
                   onChange={(e) => setTolerance(parseFloat(e.target.value))}
                   className="w-36 accent-[#0053FF] cursor-pointer"
@@ -850,7 +928,7 @@ function AttendeeSearchContent() {
             </div>
 
             {searchError && (
-              <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 flex items-center gap-3 text-rose-700 text-xs font-medium">
+              <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 p-4 flex items-center gap-3 text-rose-700 text-xs font-medium">
                 <AlertCircle className="h-4 w-4 shrink-0 text-rose-500" />
                 <span>{searchError}</span>
               </div>
@@ -957,9 +1035,9 @@ function AttendeeSearchContent() {
                         {/* Hover Overlay with Lightbox trigger */}
                         <button
                           type="button"
-                          onClick={() => setActivePhoto(photo)}
-                          className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-[2px]"
-                          title="Preview full size"
+                          onClick={() => openPhotoPreview(photo)}
+                          aria-label={`Preview ${photo.original_filename}`}
+                          className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-[2px]"
                         >
                           <div className="h-10 w-10 rounded-full bg-white text-slate-800 flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
                             <Maximize2 className="h-5 w-5" />
@@ -981,7 +1059,7 @@ function AttendeeSearchContent() {
                         <a
                           href={api.getPhotoDownloadUrl(photo.photo_id)}
                           download={photo.original_filename}
-                          className="h-8 w-8 rounded-xl bg-slate-100 hover:bg-[#0053FF] text-slate-600 hover:text-white flex items-center justify-center shrink-0 transition-colors shadow-sm"
+                          className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 hover:bg-[#0053FF] text-slate-600 hover:text-white shrink-0 transition-colors shadow-sm"
                           title="Download photograph"
                         >
                           <Download className="h-3.5 w-3.5" />
@@ -1000,13 +1078,23 @@ function AttendeeSearchContent() {
       {/* REALTIME CAMERA SNAP MODAL (FOR ALL 3 PROBE ANGLES)          */}
       {/* ============================================================ */}
       {cameraModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="relative max-w-md w-full bg-white border border-slate-200 rounded-3xl p-6 flex flex-col items-center space-y-4 shadow-2xl">
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) closeCameraModal();
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="camera-modal-title"
+            className="relative max-w-md w-full bg-white border border-slate-200 rounded-3xl p-6 flex flex-col items-center space-y-4 shadow-2xl"
+          >
             {/* Modal Header */}
             <div className="w-full flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <Camera className="h-4 w-4 text-[#0053FF]" />
-                <span className="text-sm font-bold text-slate-900">
+                <span id="camera-modal-title" className="text-sm font-bold text-slate-900">
                   Capturing: {angleSlots[cameraTargetAngle].title}
                 </span>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-50 text-[#0053FF] font-bold">
@@ -1016,7 +1104,9 @@ function AttendeeSearchContent() {
               <button
                 type="button"
                 onClick={closeCameraModal}
-                className="h-8 w-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-colors"
+                aria-label="Close camera"
+                autoFocus
+                className="h-10 w-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-colors"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -1028,6 +1118,7 @@ function AttendeeSearchContent() {
                 <button
                   key={aKey}
                   type="button"
+                  aria-pressed={cameraTargetAngle === aKey}
                   onClick={() => setCameraTargetAngle(aKey)}
                   className={`flex-1 py-1.5 px-2 text-xs font-bold rounded-lg transition-all ${
                     cameraTargetAngle === aKey
@@ -1154,13 +1245,24 @@ function AttendeeSearchContent() {
 
       {/* Fullscreen Photo Lightbox Modal */}
       {activePhoto && (
-        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center">
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) closeLightbox();
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Photo preview"
+            className="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center"
+          >
             <button
               type="button"
-              onClick={() => setActivePhoto(null)}
-              className="absolute -top-12 right-0 h-9 w-9 rounded-full bg-white text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors shadow-lg"
-              title="Close modal"
+              onClick={closeLightbox}
+              aria-label="Close photo preview"
+              autoFocus
+              className="absolute -top-12 right-0 h-10 w-10 rounded-full bg-white text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors shadow-lg"
             >
               <X className="h-5 w-5" />
             </button>

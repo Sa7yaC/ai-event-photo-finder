@@ -150,3 +150,36 @@ body {
     inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.85),
     inset 0 -2px 4px 0 rgba(160, 80, 0, 0.28);
 }
+
+/* Bento interactive micro-motion */
+@keyframes bento-scan {
+  0% { transform: translateY(-100%); opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translateY(300%); opacity: 0; }
+}
+
+.animate-bento-scan {
+  animation: bento-scan 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes bento-ring {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(252, 170, 2, 0.55); }
+  50% { box-shadow: 0 0 0 5px rgba(252, 170, 2, 0); }
+}
+
+.animate-bento-ring {
+  animation: bento-ring 2s ease-out infinite;
+}
+
+/* FAQ disclosure chevron */
+details.faq-item[open] > summary .faq-chevron {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-bento-scan,
+  .animate-bento-ring {
+    animation: none;
+  }
+}

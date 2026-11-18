@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Sharext Dashboard - Smell Report</title>
+	<script src="https://cdn.tailwindcss.com"></script>
+	<style>
+		body { font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+		.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+		.report-section { border: 1px solid #222226; background: #0a0a0b; position: relative; }
+		.corner-box { position: absolute; width: 20px; height: 20px; border: 1px solid #222226; background: #000; }
+	</style>
+</head>
+<body class="bg-black text-[#fafafa]">
+	<main class="mx-auto w-full max-w-6xl px-5 py-8 md:px-10 md:py-12">
+		<header class="report-section mb-8 p-6 md:p-8">
+			<div class="corner-box left-0 top-0 -translate-x-1/2 -translate-y-1/2"></div>
+			<div class="corner-box right-0 top-0 translate-x-1/2 -translate-y-1/2"></div>
+			<div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+				<div>
+					<div class="mono mb-2 text-xs tracking-widest text-[#666]">// SMELL</div>
+					<h1 class="text-4xl font-bold tracking-tight md:text-6xl">Sharext Dashboard</h1>
+				</div>
+				<div class="mono text-left text-xs text-[#666] md:text-right">
+					<div>COMMANDCODE REPORT</div>
+					<div class="text-[#444]">2026-11-17</div>
+				</div>
+			</div>
+		</header>
+
+		<section class="report-section mb-8 p-6 md:p-8">
+			<div class="corner-box left-0 top-0 -translate-x-1/2 -translate-y-1/2"></div>
+			<div class="corner-box right-0 top-0 translate-x-1/2 -translate-y-1/2"></div>
+			<div class="grid gap-8 md:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+				<div>
+					<div class="mono mb-2 text-xs tracking-widest text-[#666]">// OVERALL</div>
+					<div class="text-6xl font-bold tracking-tight md:text-7xl">5</div>
+					<div class="mt-1 text-lg text-[#666]">/ 10</div>
+					<div class="mt-4 inline-flex border border-[#fbbf24]/30 bg-[#fbbf24]/10 px-3 py-1 text-sm text-[#fbbf24]">NEEDS CHANGES</div>
+				</div>
+				<div>
+					<div class="mono mb-3 text-xs tracking-widest text-[#666]">// TL;DR</div>
+					<p class="text-sm leading-6 text-[#a0a0a0]">The chrome is disciplined product UI. The event area is the tell: 17 equal cards repeating one status pill and one action pair, with no date, count, or priority. The join dialog is assembled from defaults, not authored.</p>
+					<p class="mt-4 text-sm leading-6 text-[#fbbf24]">Fix composition first, then the dialog, then the 11px chrome labels.</p>
+				</div>
+			</div>
+		</section>
+
+		<section class="report-section mb-8 p-6 md:p-8">
+			<div class="mono mb-6 text-xs tracking-widest text-[#666]">// HEURISTIC SCORES</div>
+			<div class="overflow-x-auto">
+				<table class="w-full min-w-[720px] border-collapse text-sm">
+					<thead>
+						<tr class="border-b border-[#222226] text-left mono text-xs text-[#666]">
+							<th class="py-3 pr-4 font-normal">#</th>
+							<th class="py-3 pr-4 font-normal">HEURISTIC</th>
+							<th class="py-3 pr-4 font-normal">ABSENT</th>
+							<th class="py-3 font-normal">EVIDENCE</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr class="border-b border-[#1a1a1e]"><td class="py-3 pr-4 text-[#555]">1</td><td class="py-3 pr-4">Tech gradient</td><td class="py-3 pr-4 text-[#f43f5e]">NO</td><td class="py-3 text-[#a0a0a0]">Avatar blue→indigo; CTA blue→blue-700</td></tr>
+						<tr class="border-b border-[#1a1a1e]"><td class="py-3 pr-4 text-[#555]">2</td><td class="py-3 pr-4">Generic tech hue</td><td class="py-3 pr-4 text-[#34d399]">YES</td><td class="py-3 text-[#a0a0a0]">#0053FF is the product mark</td></tr>
+						<tr class="border-b border-[#1a1a1e]"><td class="py-3 pr-4 text-[#555]">3</td><td class="py-3 pr-4">Feature tile grid</td><td class="py-3 pr-4 text-[#f43f5e]">NO</td><td class="py-3 text-[#a0a0a0]">17 equal cards, no priority or differentiation</td></tr>
+						<tr class="border-b border-[#1a1a1e]"><td class="py-3 pr-4 text-[#555]">4</td><td class="py-3 pr-4">Accent rail</td><td class="py-3 pr-4 text-[#34d399]">YES</td><td class="py-3 text-[#a0a0a0]">None</td></tr>
+						<tr class="border-b border-[#1a1a1e]"><td class="py-3 pr-4 text-[#555]">5</td><td class="py-3 pr-4">Unearned blur</td><td class="py-3 pr-4 text-[#34d399]">YES</td><td class="py-3 text-[#a0a0a0]">Only modal scrim and mobile header</td></tr>
+						<tr class="border-b border-[#1a1a1e]"><td class="py-3 pr-4 text-[#555]">6</td><td class="py-3 pr-4">Stat monument</td><td class="py-3 pr-4 text-[#34d399]">YES</td><td class="py-3 text-[#a0a0a0]">Counts are contextual</td></tr>
+						<tr class="border-b border-[#1a1a1e]"><td class="py-3 pr-4 text-[#555]">7</td><td class="py-3 pr-4">Icon topper</td><td class="py-3 pr-4 text-[#f43f5e]">NO</td><td class="py-3 text-[#a0a0a0]">64px Sparkles tile above the empty-state heading</td></tr>
+						<tr class="border-b border-[#1a1a1e]"><td class="py-3 pr-4 text-[#555]">8</td><td class="py-3 pr-4">Bounce everywhere</td><td class="py-3 pr-4 text-[#34d399]">YES</td><td class="py-3 text-[#a0a0a0]">No bounce; one decorative pulse reported LOW</td></tr>
+						<tr class="border-b border-[#1a1a1e]"><td class="py-3 pr-4 text-[#555]">9</td><td class="py-3 pr-4">Default type</td><td class="py-3 pr-4 text-[#34d399]">YES</td><td class="py-3 text-[#a0a0a0]">Balimo is the local brand face</td></tr>
+						<tr><td class="py-3 pr-4 text-[#555]">10</td><td class="py-3 pr-4">Center stack</td><td class="py-3 pr-4 text-[#34d399]">YES</td><td class="py-3 text-[#a0a0a0]">Page is left-aligned</td></tr>
+					</tbody>
+				</table>
+			</div>
+		</section>
+
+		<section class="report-section mb-8 p-6 md:p-8">
+			<div class="mono mb-6 text-xs tracking-widest text-[#666]">// PRIORITY ISSUES</div>
+			<div class="space-y-5">
+				<article class="border border-[#2a1d22] bg-[#110b0d] p-5">
+					<div class="mono mb-2 text-xs text-[#f43f5e]">HIGH · LAYOUT</div>
+					<h2 class="mb-2 text-lg font-semibold">17 equal event cards with nothing to scan</h2>
+					<p class="mb-3 text-sm leading-6 text-[#a0a0a0]"><span class="mono text-[#888]">dashboard/page.tsx:262-329</span> — every card repeats the same ACTIVE pill and the same two actions; no date, count, or priority. At 390px one card is taller than the viewport.</p>
+					<div class="border-l border-[#fbbf24] pl-4 text-sm leading-6 text-[#fbbf24]">FIX: one bordered ledger, header row, ~64px rows with name, status, date, actions.</div>
+				</article>
+				<article class="border border-[#2a1d22] bg-[#110b0d] p-5">
+					<div class="mono mb-2 text-xs text-[#f43f5e]">HIGH · ACCESSIBILITY</div>
+					<h2 class="mb-2 text-lg font-semibold">The join dialog is not a dialog</h2>
+					<p class="mb-3 text-sm leading-6 text-[#a0a0a0]"><span class="mono text-[#888]">dashboard/page.tsx:332-393, Sidebar.tsx:550-614</span> — no role, no Escape, no focus trap or restore, no label on the 14px field, unnamed 24×24 close.</p>
+					<div class="border-l border-[#fbbf24] pl-4 text-sm leading-6 text-[#fbbf24]">FIX: one shared modal with dialog semantics, visible label, 16px input, trap/restore, Escape, 44px controls.</div>
+				</article>
+				<article class="border border-[#2a1d22] bg-[#110b0d] p-5">
+					<div class="mono mb-2 text-xs text-[#f43f5e]">HIGH · ACCESSIBILITY</div>
+					<h2 class="mb-2 text-lg font-semibold">11px chrome labels at 2.5:1</h2>
+					<p class="mb-3 text-sm leading-6 text-[#a0a0a0]"><span class="mono text-[#888]">Sidebar.tsx:228, 288, 400</span> — MENU, EVENTS CREATED, EVENTS JOINED render 11px slate-400 on #fbfbfb.</p>
+					<div class="border-l border-[#fbbf24] pl-4 text-sm leading-6 text-[#fbbf24]">FIX: 11px slate-500 (4.8:1); delete the duplicate 10px subtext.</div>
+				</article>
+				<article class="border border-[#1f1f24] p-5">
+					<div class="mono mb-2 text-xs text-[#fbbf24]">MEDIUM · WRITING</div>
+					<h2 class="mb-2 text-lg font-semibold">"Photos (uploaded &amp; downloaded) (for premium users) Premium"</h2>
+					<p class="mb-3 text-sm leading-6 text-[#a0a0a0]"><span class="mono text-[#888]">Sidebar.tsx:130-135</span> — three statements of the same fact inside one nav item.</p>
+					<div class="border-l border-[#fbbf24] pl-4 text-sm leading-6 text-[#fbbf24]">FIX: "Photos" plus the Premium badge.</div>
+				</article>
+				<article class="border border-[#1f1f24] p-5">
+					<div class="mono mb-2 text-xs text-[#fbbf24]">MEDIUM · COLOR</div>
+					<h2 class="mb-2 text-lg font-semibold">Tech gradients inside an earned palette</h2>
+					<p class="mb-3 text-sm leading-6 text-[#a0a0a0]"><span class="mono text-[#888]">Sidebar.tsx:531; dashboard/page.tsx:215</span> — blue→indigo avatar and blue→blue-700 action button.</p>
+					<div class="border-l border-[#fbbf24] pl-4 text-sm leading-6 text-[#fbbf24]">FIX: flat #0053FF surfaces; keep the amber icon accent.</div>
+				</article>
+			</div>
+		</section>
+
+		<section class="report-section mb-8 p-6 md:p-8">
+			<div class="mono mb-6 text-xs tracking-widest text-[#666]">// WHAT'S WORKING</div>
+			<div class="grid gap-4 md:grid-cols-3">
+				<article class="border border-[#1f1f24] p-4"><h2 class="mb-2 text-sm font-semibold">Earned brand color</h2><p class="text-sm leading-6 text-[#a0a0a0]">#0053FF is the logo and hero color; amber is limited to icon accents.</p></article>
+				<article class="border border-[#1f1f24] p-4"><h2 class="mb-2 text-sm font-semibold">Balimo</h2><p class="text-sm leading-6 text-[#a0a0a0]">The brand face carries headings with real weight contrast.</p></article>
+				<article class="border border-[#1f1f24] p-4"><h2 class="mb-2 text-sm font-semibold">Live data, real states</h2><p class="text-sm leading-6 text-[#a0a0a0]">API-backed list, loading skeletons, and a clear primary action.</p></article>
+			</div>
+		</section>
+
+		<footer class="mono py-8 text-center text-xs tracking-widest text-[#444]">
+			Generated with CommandCode - 2026-11-17
+		</footer>
+	</main>
+</body>
+</html>
