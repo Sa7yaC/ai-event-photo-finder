@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { Sidebar } from "@/components/Sidebar";
+import { RequireAuth } from "@/components/RequireAuth";
 import { Menu } from "lucide-react";
 
 interface DashboardLayoutProps {
@@ -14,7 +15,8 @@ export function DashboardLayout({ children, activeEventId }: DashboardLayoutProp
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex font-sans antialiased">
+    <RequireAuth>
+      <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex font-sans antialiased">
       {/* Sleek Left Sidebar */}
       <Suspense
         fallback={
@@ -59,6 +61,7 @@ export function DashboardLayout({ children, activeEventId }: DashboardLayoutProp
         </div>
       </div>
     </div>
+    </RequireAuth>
   );
 }
 

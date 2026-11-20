@@ -433,21 +433,21 @@ export default function Home() {
         {/* =========================================================================
             SECTION 4: FREQUENTLY ASKED QUESTIONS
             ========================================================================= */}
-        <section id="faq" className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-24">
-          <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
+        <section id="faq" className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-24">
+          <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
             Frequently asked questions
           </h2>
 
-          <div className="mt-10 sm:mt-12">
+          <div className="mt-8 sm:mt-12">
             {FAQ_ITEMS.map((item) => (
               <details key={item.question} className="faq-item border-b border-slate-200">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-5 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0053FF] sm:py-6 [&::-webkit-details-marker]:hidden">
-                  <span className="font-balimo text-lg font-semibold leading-snug text-slate-900 sm:text-xl">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0053FF] sm:gap-6 sm:py-6 [&::-webkit-details-marker]:hidden">
+                  <span className="font-balimo text-base font-semibold leading-snug text-slate-900 sm:text-xl">
                     {item.question}
                   </span>
-                  <ChevronDown className="faq-chevron h-5 w-5 shrink-0 text-slate-400 transition-transform duration-200" />
+                  <ChevronDown className="faq-chevron h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 sm:h-5 sm:w-5" />
                 </summary>
-                <p className="max-w-3xl pb-6 text-sm leading-relaxed text-slate-600 sm:text-base">
+                <p className="max-w-3xl pb-5 text-[13px] leading-relaxed text-slate-600 sm:pb-6 sm:text-base">
                   <strong className="font-semibold text-slate-900">{item.lead}</strong>{" "}
                   {item.rest}
                 </p>

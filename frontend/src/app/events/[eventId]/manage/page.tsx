@@ -20,6 +20,7 @@ import {
   Calendar,
   Clock,
   Sparkles,
+  Sliders,
   ExternalLink
 } from "lucide-react";
 
@@ -40,6 +41,9 @@ function EventManageContent() {
   const [copiedLink, setCopiedLink] = useState(false);
   const [reindexing, setReindexing] = useState(false);
   const [reindexResult, setReindexResult] = useState<{ photos_reindexed: number; total_faces_detected: number } | null>(null);
+  const [toleranceDraft, setToleranceDraft] = useState(0.5);
+  const [savingTolerance, setSavingTolerance] = useState(false);
+  const [toleranceSaved, setToleranceSaved] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -64,6 +68,7 @@ function EventManageContent() {
       ]);
       setEvent(ev);
       setStats(st);
+      setToleranceDraft(ev.match_tolerance ?? 0.5);
 
       if (token) {
         try {
@@ -146,6 +151,28 @@ function EventManageContent() {
       setStats(st);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to delete photograph");
+    }
+  };
+
+  const handleSaveTolerance = async () => {
+    if (!organizerToken) return;
+    setSavingTolerance(true);
+    setError(null);
+    setToleranceSaved(false);
+    try {
+      const updated = await api.updateEventSettings(
+        eventId,
+        { match_tolerance: toleranceDraft },
+        organizerToken
+      );
+      setEvent(updated);
+      setToleranceDraft(updated.match_tolerance ?? toleranceDraft);
+      setToleranceSaved(true);
+      window.setTimeout(() => setToleranceSaved(false), 2500);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Could not save match sensitivity.");
+    } finally {
+      setSavingTolerance(false);
     }
   };
 
@@ -350,6 +377,47 @@ function EventManageContent() {
                 <AlertCircle className="h-4 w-4 text-rose-500" />
               </span>
               <div className="text-2xl font-black font-mono text-rose-600">{stats.failed_photos}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Host-only match sensitivity */}
+        {organizerToken && event && (
+          <div className="rounded-3xl border border-slate-200/90 bg-white p-5 shadow-sm sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1">
+                <h2 className="flex items-center gap-2 text-sm font-black text-slate-900">
+                  <Sliders className="h-4 w-4 text-[#0053FF]" />
+                  Face match sensitivity
+                </h2>
+                <p className="max-w-xl text-xs leading-relaxed text-slate-500">
+                  Attendee searches use this value. Lower is stricter, higher finds more photos. Attendees cannot change it.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <input
+                  type="range"
+                  min="0.35"
+                  max="0.7"
+                  step="0.01"
+                  value={toleranceDraft}
+                  onChange={(e) => setToleranceDraft(parseFloat(e.target.value))}
+                  aria-label="Face match sensitivity"
+                  className="w-36 accent-[#0053FF] cursor-pointer"
+                />
+                <span className="w-10 text-right font-mono text-xs font-black text-[#0053FF]">
+                  {toleranceDraft.toFixed(2)}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleSaveTolerance}
+                  disabled={savingTolerance}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#0053FF] px-4 text-xs font-bold text-white transition-colors hover:bg-[#0047db] disabled:opacity-60"
+                >
+                  {savingTolerance ? "Saving" : toleranceSaved ? "Saved" : "Save"}
+                </button>
+              </div>
             </div>
           </div>
         )}

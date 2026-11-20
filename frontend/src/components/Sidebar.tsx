@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { api, EventItem } from "@/lib/api";
+import { auth, useAccountUser } from "@/lib/auth";
 import { JoinEventModal } from "@/components/JoinEventModal";
 import {
   Home,
@@ -47,6 +48,7 @@ function EventMark({ name, joined = false }: { name: string; joined?: boolean })
 
 export function Sidebar({ activeEventId, mobileOpen, onMobileClose }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const currentTab = searchParams.get("tab") || "";
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -56,6 +58,7 @@ export function Sidebar({ activeEventId, mobileOpen, onMobileClose }: SidebarPro
   const [expandedEventId, setExpandedEventId] = useState<string | null>(activeEventId || null);
   const [expandedParticipatedId, setExpandedParticipatedId] = useState<string | null>("pe-1");
   const [showJoinModal, setShowJoinModal] = useState(false);
+  const user = useAccountUser();
 
   // Participated events (events the user attended / searched photos in)
   const participatedEvents = [
@@ -99,13 +102,12 @@ export function Sidebar({ activeEventId, mobileOpen, onMobileClose }: SidebarPro
     };
   }, [activeEventId]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     try {
-      localStorage.removeItem("auth_token");
-      localStorage.removeItem("user");
+      await auth.logout();
       sessionStorage.clear();
     } catch { }
-    window.location.href = "/";
+    router.push("/login");
   };
 
   // Main Navigation items
@@ -495,18 +497,23 @@ export function Sidebar({ activeEventId, mobileOpen, onMobileClose }: SidebarPro
               }`}
             title="Profile"
           >
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0053FF] text-xs font-bold text-white">
-              <User className="h-4 w-4" />
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0053FF] text-[11px] font-bold text-white">
+              {user?.name?.trim().charAt(0).toUpperCase() || <User className="h-4 w-4" />}
             </div>
 
             {!isCollapsed && (
               <>
-                <span
-                  className={`min-w-0 flex-1 truncate text-xs font-semibold ${
-                    pathname === "/profile" ? "text-[#0053FF]" : "text-slate-900"
-                  }`}
-                >
-                  My profile
+                <span className="min-w-0 flex-1">
+                  <span
+                    className={`block truncate text-xs font-semibold ${
+                      pathname === "/profile" ? "text-[#0053FF]" : "text-slate-900"
+                    }`}
+                  >
+                    {user?.name || "My profile"}
+                  </span>
+                  <span className="block truncate text-[10px] text-slate-500">
+                    {user?.email || "View account"}
+                  </span>
                 </span>
                 <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
               </>

@@ -15,8 +15,8 @@ const LOOP_GAP = 1500;
 
 const photo = (name: string) => `/bento/stock/${name}.jpg`;
 const FACE_FRONT = "/demo/face-front.jpg";
-const FACE_LEFT = "/demo/face-left.jpg";
-const FACE_RIGHT = "/demo/face-right.jpg";
+const FACE_TURN_LEFT = "/demo/face-right.jpg";
+const FACE_TURN_RIGHT = "/demo/face-left.jpg";
 
 const UPLOAD_PHOTOS = [
   photo("wedding-group"),
@@ -321,14 +321,14 @@ function SelfieDemo() {
             animate={{ opacity: showingLeft ? 1 : 0 }}
             transition={{ duration: 0.26, ease: ENTER }}
             className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url(${FACE_LEFT})` }}
+            style={{ backgroundImage: `url(${FACE_TURN_LEFT})` }}
           />
           <motion.div
             initial={false}
             animate={{ opacity: showingRight ? 1 : 0 }}
             transition={{ duration: 0.26, ease: ENTER }}
             className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url(${FACE_RIGHT})` }}
+            style={{ backgroundImage: `url(${FACE_TURN_RIGHT})` }}
           />
 
           {flash && (

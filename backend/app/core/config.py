@@ -39,6 +39,16 @@ class Settings(BaseSettings):
         "http://127.0.0.1:3000",
     ]
 
+    # Authentication
+    FRONTEND_URL: str = "http://localhost:3000"
+    SUPABASE_URL: str | None = None
+    SUPABASE_ANON_KEY: str | None = None
+    EMAIL_FROM: str = "no-reply@sharext.app"
+    SMTP_HOST: str | None = None
+    SMTP_PORT: int = 587
+    SMTP_USER: str | None = None
+    SMTP_PASSWORD: str | None = None
+
     @computed_field
     def sync_database_url(self) -> str:
         if self.DATABASE_URL:

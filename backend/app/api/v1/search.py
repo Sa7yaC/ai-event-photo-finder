@@ -35,12 +35,12 @@ async def search_photos_by_selfie(
     selfie: Optional[UploadFile] = File(None, description="Single selfie probe"),
     files: Optional[List[UploadFile]] = File(None, description="Multiple selfie probes (e.g. Front, Left, Right)"),
     tolerance: float = Query(
-        default=0.48,
+        default=0.5,
         ge=0.2,
         le=0.8,
         description=(
             "Face similarity tolerance. Lower = stricter matching. "
-            "0.48 provides high precision for frontal and angled matches with zero false-positive bleed."
+            "0.5 is the default used by attendee searches."
         ),
     ),
     limit: int = Query(default=50, ge=1, le=200, description="Maximum number of photos to return"),

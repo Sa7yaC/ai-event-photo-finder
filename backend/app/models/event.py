@@ -1,7 +1,7 @@
 from datetime import date
 from typing import List, Optional
 import uuid
-from sqlalchemy import Date, String, Text, Uuid
+from sqlalchemy import Date, Float, ForeignKey, String, Text, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base, TimestampMixin
 
@@ -20,6 +20,14 @@ class Event(Base, TimestampMixin):
     slug: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
     status: Mapped[str] = mapped_column(String(50), default="active", nullable=False)
     organizer_token: Mapped[str] = mapped_column(String(128), index=True, nullable=False)
+    owner_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        index=True,
+        nullable=True,
+    )
+    host_name: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    match_tolerance: Mapped[float] = mapped_column(Float, default=0.5, nullable=False)
 
     # Relationships
     photos: Mapped[List["Photo"]] = relationship(

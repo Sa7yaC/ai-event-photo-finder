@@ -2,12 +2,16 @@ from typing import List, Optional
 import uuid
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.api.v1.auth import get_current_user, get_optional_user
 from app.core.database import get_db
+from app.models.user import User
 from app.schemas.event import (
     EventCreate,
     EventCreatedResponse,
     EventResponse,
+    EventSettingsUpdate,
     EventStatsResponse,
+    EventViewResponse,
 )
 from app.schemas.photo import PhotoBatchUploadResponse, PhotoListResponse, PhotoResponse
 from app.services.event_service import EventService
@@ -21,13 +25,14 @@ router = APIRouter()
 @router.post("", response_model=EventCreatedResponse, status_code=status.HTTP_201_CREATED, summary="Create an event")
 async def create_event(
     data: EventCreate,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> EventCreatedResponse:
     """
-    Create a new event. Returns the event metadata along with a secret organizer_token.
-    The organizer_token must be saved by the client to perform administrative operations.
+    Create a new event owned by the signed-in host. Returns the event metadata and a
+    secret organizer_token for administrative operations.
     """
-    event = await EventService.create_event(db, data)
+    event = await EventService.create_event(db, data, owner=current_user)
     return EventCreatedResponse.model_validate(event)
 
 
@@ -35,10 +40,11 @@ async def create_event(
 async def list_events(
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
+    current_user: Optional[User] = Depends(get_optional_user),
     db: AsyncSession = Depends(get_db),
 ) -> List[EventResponse]:
-    """List events for dashboard overview."""
-    events = await EventService.list_events(db, limit=limit, offset=offset)
+    """List events. Signed-in hosts see their own events; anonymous callers see the public list."""
+    events = await EventService.list_events(db, limit=limit, offset=offset, owner=current_user)
     return [EventResponse.model_validate(e) for e in events]
 
 
@@ -84,6 +90,80 @@ async def get_event_stats(
             detail=f"Event with ID '{event_id}' not found.",
         )
     return await EventService.get_event_stats(db, event)
+
+
+@router.get(
+    "/{event_id}/view",
+    response_model=EventViewResponse,
+    summary="Event page payload for hosts and attendees",
+)
+async def get_event_view(
+    event_id: uuid.UUID,
+    x_attendee_key: Optional[str] = Header(None, alias="X-Attendee-Key"),
+    current_user: Optional[User] = Depends(get_optional_user),
+    db: AsyncSession = Depends(get_db),
+) -> EventViewResponse:
+    """
+    Return the event page data, resolved for the caller's role.
+
+    - Hosts see their album with all uploaded photos and management actions.
+    - Attendees see the event details and their scanned photos.
+    """
+    event = await EventService.get_event_by_id(db, event_id)
+    if not event:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Event with ID '{event_id}' not found.",
+        )
+
+    stats = await EventService.get_event_stats(db, event)
+    is_host = EventService.is_host(event, current_user)
+    attendee_key = x_attendee_key.strip() if x_attendee_key else None
+    if attendee_key and len(attendee_key) > 64:
+        attendee_key = None
+
+    if not is_host and (current_user or attendee_key):
+        await EventService.register_attendee(db, event.id, current_user, attendee_key)
+        stats = await EventService.get_event_stats(db, event)
+
+    return EventViewResponse(
+        **EventResponse.model_validate(event).model_dump(),
+        is_host=is_host,
+        attendees=stats.attendees,
+        total_photos=stats.total_photos,
+    )
+
+
+@router.patch(
+    "/{event_id}/settings",
+    response_model=EventResponse,
+    summary="Update host-controlled event settings",
+)
+async def update_event_settings(
+    event_id: uuid.UUID,
+    payload: EventSettingsUpdate,
+    x_organizer_token: Optional[str] = Header(None, alias="X-Organizer-Token"),
+    current_user: Optional[User] = Depends(get_optional_user),
+    db: AsyncSession = Depends(get_db),
+) -> EventResponse:
+    event = await EventService.get_event_by_id(db, event_id)
+    if not event:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Event with ID '{event_id}' not found.",
+        )
+
+    authorized = EventService.verify_organizer_token(event, x_organizer_token) or EventService.is_host(
+        event, current_user
+    )
+    if not authorized:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the event host can change these settings.",
+        )
+
+    updated = await EventService.update_settings(db, event, payload.match_tolerance)
+    return EventResponse.model_validate(updated)
 
 
 @router.post(
@@ -138,11 +218,12 @@ async def list_event_photos(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     x_organizer_token: Optional[str] = Header(None, alias="X-Organizer-Token"),
+    current_user: Optional[User] = Depends(get_optional_user),
     db: AsyncSession = Depends(get_db),
 ) -> PhotoListResponse:
     """
     Retrieve photo metadata for the specified event.
-    Protected endpoint requiring the organizer token.
+    Requires either the organizer token or a signed-in host account.
     """
     event = await EventService.get_event_by_id(db, event_id)
     if not event:
@@ -151,7 +232,10 @@ async def list_event_photos(
             detail=f"Event with ID '{event_id}' not found.",
         )
 
-    if not EventService.verify_organizer_token(event, x_organizer_token):
+    authorized = EventService.verify_organizer_token(event, x_organizer_token) or EventService.is_host(
+        event, current_user
+    )
+    if not authorized:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid or missing X-Organizer-Token header.",

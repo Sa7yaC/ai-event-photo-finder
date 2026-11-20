@@ -41,8 +41,12 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - POSTGRES_DB=${POSTGRES_DB:-photofinder}
       - BACKEND_CORS_ORIGINS=["http://localhost:3000","http://127.0.0.1:3000"]
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+      - SUPABASE_URL=${SUPABASE_URL:-}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-}
     volumes:
       - ./backend/app:/app/app
+      - ./backend/alembic:/app/alembic
       - backend_storage:/app/storage_data
     networks:
       - photofinder_network

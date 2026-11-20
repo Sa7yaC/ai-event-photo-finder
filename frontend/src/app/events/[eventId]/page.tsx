@@ -1,136 +1,108 @@
 "use client";
 
-import { useEffect, useState, useRef, Suspense } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { 
-  api, 
-  EventItem, 
-  EventStats, 
-  SelfieSearchResult, 
-  SelfieSearchResponse 
+import {
+  api,
+  EventItem,
+  EventView,
+  SelfieSearchResponse,
 } from "@/lib/api";
-import { 
-  Camera, 
-  UploadCloud, 
-  Sparkles, 
-  ShieldCheck, 
-  Search, 
-  Download, 
-  CheckCircle2, 
-  AlertCircle, 
-  RefreshCw, 
-  Sliders, 
-  Users, 
-  Maximize2, 
-  X, 
-  Calendar, 
-  Layers, 
+import {
+  PhotoGallery,
+  type GalleryDensity,
+  type GalleryPhoto,
+} from "@/components/PhotoGallery";
+import {
+  AlertCircle,
   ArrowLeft,
-  Share2,
+  Camera,
   Check,
+  CheckCircle2,
+  Images,
+  RefreshCw,
+  Search,
+  Share2,
   SwitchCamera,
-  Compass,
   Trash2,
-  ChevronRight,
-  RotateCcw
+  UploadCloud,
+  Users,
+  X,
 } from "lucide-react";
 
-type AngleType = "front" | "left" | "right";
+type SelfieMode = "live" | "upload";
+type SelfieAngle = "front" | "left" | "right";
 
-interface AngleSlot {
-  key: AngleType;
-  title: string;
-  badge: string;
-  description: string;
-  guidePrompt: string;
-  rotationDegree: number;
-  file: File | null;
-  previewUrl: string | null;
+const SELFIE_ORDER: SelfieAngle[] = ["front", "left", "right"];
+
+const SELFIE_CUES: Record<SelfieAngle, { label: string; short: string; hint: string }> = {
+  front: {
+    label: "Look in front",
+    short: "Front",
+    hint: "Look straight into the camera",
+  },
+  left: {
+    label: "Look left",
+    short: "Left",
+    hint: "Turn your head to the left",
+  },
+  right: {
+    label: "Look right",
+    short: "Right",
+    hint: "Turn your head to the right",
+  },
+};
+
+interface SelfieShot {
+  file: File;
+  preview: string;
 }
 
-function AttendeeSearchContent() {
+function AttendeeEventContent() {
   const params = useParams();
   const rawIdentifier = params.eventId as string;
 
   const [event, setEvent] = useState<EventItem | null>(null);
-  const [stats, setStats] = useState<EventStats | null>(null);
+  const [eventView, setEventView] = useState<EventView | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Tab: "guided" (3 angle slots with live click / upload on each) vs "batch" (drop multiple photos)
-  const [activeTab, setActiveTab] = useState<"guided" | "batch">("guided");
+  // Host album
+  const [hostPhotos, setHostPhotos] = useState<GalleryPhoto[]>([]);
+  const [hostPhotosLoading, setHostPhotosLoading] = useState(false);
+  const [hostDensity, setHostDensity] = useState<GalleryDensity>("medium");
+  const [hostSelected, setHostSelected] = useState<string[]>([]);
 
-  // 3-Angle Guided State
-  const [angleSlots, setAngleSlots] = useState<Record<AngleType, AngleSlot>>({
-    front: {
-      key: "front",
-      title: "Front Face",
-      badge: "Angle 1",
-      description: "Direct frontal view with natural lighting",
-      guidePrompt: "Look straight into the camera",
-      rotationDegree: 0,
-      file: null,
-      previewUrl: null,
-    },
-    left: {
-      key: "left",
-      title: "Left Profile",
-      badge: "Angle 2",
-      description: "Turn head 30° to 45° to your left",
-      guidePrompt: "Turn your head slightly to the left",
-      rotationDegree: -8,
-      file: null,
-      previewUrl: null,
-    },
-    right: {
-      key: "right",
-      title: "Right Profile",
-      badge: "Angle 3",
-      description: "Turn head 30° to 45° to your right",
-      guidePrompt: "Turn your head slightly to the right",
-      rotationDegree: 8,
-      file: null,
-      previewUrl: null,
-    },
-  });
+  // Selfie
+  const [mode, setMode] = useState<SelfieMode>("live");
+  const [shots, setShots] = useState<Partial<Record<SelfieAngle, SelfieShot>>>({});
+  const [captureAngle, setCaptureAngle] = useState<SelfieAngle>("front");
+  const shotsRef = useRef(shots);
+  const [selfieError, setSelfieError] = useState<string | null>(null);
 
-  // Modal Camera Viewfinder State (for clicking live selfie for any angle)
-  const [cameraModalOpen, setCameraModalOpen] = useState(false);
-  const [cameraTargetAngle, setCameraTargetAngle] = useState<AngleType>("front");
+  // Camera
+  const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const lastTriggerRef = useRef<HTMLElement | null>(null);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
 
-  // File upload input ref & target
-  const slotFileRef = useRef<HTMLInputElement>(null);
-  const batchInputRef = useRef<HTMLInputElement>(null);
-  const nativeCameraRef = useRef<HTMLInputElement>(null);
-  const lastCameraTriggerRef = useRef<HTMLElement | null>(null);
-  const lastPhotoTriggerRef = useRef<HTMLElement | null>(null);
-  const [targetSlotUpload, setTargetSlotUpload] = useState<AngleType>("front");
-
-  const triggerNativeCamera = (angle: AngleType) => {
-    setTargetSlotUpload(angle);
-    nativeCameraRef.current?.click();
-  };
-
-  // Batch Multi-Photo Dropzone State
-  const [batchFiles, setBatchFiles] = useState<{ file: File; previewUrl: string }[]>([]);
-
-  // Search Settings & State
-  const [tolerance, setTolerance] = useState<number>(0.48);
+  // Search
   const [searching, setSearching] = useState(false);
   const [searchResponse, setSearchResponse] = useState<SelfieSearchResponse | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [matchDensity, setMatchDensity] = useState<GalleryDensity>("medium");
+  const [matchSelected, setMatchSelected] = useState<string[]>([]);
 
-  // Lightbox Modal
-  const [activePhoto, setActivePhoto] = useState<SelfieSearchResult | null>(null);
+  const resultsRef = useRef<HTMLElement>(null);
+  const selfieSectionRef = useRef<HTMLElement>(null);
+
   const [copiedLink, setCopiedLink] = useState(false);
 
-  // Load Event
   useEffect(() => {
     async function loadEvent() {
       if (!rawIdentifier) return;
@@ -138,8 +110,10 @@ function AttendeeSearchContent() {
       setError(null);
       try {
         let ev: EventItem;
-        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawIdentifier);
-        
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+          rawIdentifier
+        );
+
         if (isUuid) {
           ev = await api.getEvent(rawIdentifier);
         } else {
@@ -151,14 +125,30 @@ function AttendeeSearchContent() {
         }
         setEvent(ev);
 
-        const st = await api.getEventStats(ev.id).catch(() => null);
-        setStats(st);
-      } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("Failed to load event.");
+        const view = await api.getEventView(ev.id).catch(() => null);
+        setEventView(view);
+
+        if (view?.is_host) {
+          setHostPhotosLoading(true);
+          try {
+            const photoData = await api.listPhotosForHost(ev.id, 200);
+            setHostPhotos(
+              photoData.items.map((photo) => ({
+                id: photo.id,
+                filename: photo.original_filename,
+                url: api.getPhotoDownloadUrl(photo.id),
+                width: photo.image_width,
+                height: photo.image_height,
+              }))
+            );
+          } catch {
+            setHostPhotos([]);
+          } finally {
+            setHostPhotosLoading(false);
+          }
         }
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Failed to load event.");
       } finally {
         setLoading(false);
       }
@@ -166,7 +156,26 @@ function AttendeeSearchContent() {
     loadEvent();
   }, [rawIdentifier]);
 
-  // Camera Management
+  useEffect(() => {
+    if (!searchResponse) return;
+    const timer = window.setTimeout(() => {
+      resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [searchResponse]);
+
+  useEffect(() => {
+    shotsRef.current = shots;
+  }, [shots]);
+
+  useEffect(() => {
+    return () => {
+      Object.values(shotsRef.current).forEach((shot) => {
+        if (shot) URL.revokeObjectURL(shot.preview);
+      });
+    };
+  }, []);
+
   const startCameraStream = async () => {
     setCameraError(null);
     try {
@@ -174,7 +183,7 @@ function AttendeeSearchContent() {
         streamRef.current.getTracks().forEach((track) => track.stop());
       }
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: facingMode, width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: { facingMode, width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false,
       });
       streamRef.current = stream;
@@ -184,106 +193,82 @@ function AttendeeSearchContent() {
       }
       setCameraActive(true);
     } catch {
-      setCameraError("Camera unavailable or permission denied. Please allow camera access in browser or upload a photo directly.");
+      setCameraError("Camera unavailable or permission denied. You can upload a photo instead.");
       setCameraActive(false);
     }
   };
 
   const stopCameraStream = () => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
     setCameraActive(false);
   };
 
-  const openCameraForAngle = (angle: AngleType) => {
-    lastCameraTriggerRef.current = document.activeElement as HTMLElement | null;
-    setCameraTargetAngle(angle);
-    setCameraModalOpen(true);
-    startCameraStream();
+  const openCamera = () => {
+    lastTriggerRef.current = document.activeElement as HTMLElement | null;
+    const nextAngle = SELFIE_ORDER.find((angle) => !shots[angle]) ?? "front";
+    setCaptureAngle(nextAngle);
+    setCameraOpen(true);
   };
 
-  const closeCameraModal = () => {
+  const closeCamera = () => {
     stopCameraStream();
-    setCameraModalOpen(false);
-    requestAnimationFrame(() => lastCameraTriggerRef.current?.focus());
-  };
-
-  const openPhotoPreview = (photo: SelfieSearchResult) => {
-    lastPhotoTriggerRef.current = document.activeElement as HTMLElement | null;
-    setActivePhoto(photo);
-  };
-
-  const closeLightbox = () => {
-    setActivePhoto(null);
-    requestAnimationFrame(() => lastPhotoTriggerRef.current?.focus());
-  };
-
-  // Flip front/back camera
-  const toggleFacingMode = () => {
-    setFacingMode((prev) => (prev === "user" ? "environment" : "user"));
+    setCameraOpen(false);
+    requestAnimationFrame(() => lastTriggerRef.current?.focus());
   };
 
   useEffect(() => {
-    if (cameraModalOpen) {
-      // Start/stop the media stream as the camera dialog opens, closes, or flips.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      startCameraStream();
-    } else {
-      stopCameraStream();
-    }
-    return () => {
-      stopCameraStream();
-    };
+    if (!cameraOpen) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    startCameraStream();
+    return () => stopCameraStream();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cameraModalOpen, facingMode]);
+  }, [cameraOpen, facingMode]);
 
   useEffect(() => {
-    if (!cameraModalOpen && !activePhoto) return;
+    if (!cameraOpen) return;
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
-    const handleKeyDown = (event: KeyboardEvent) => {
+    const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        if (cameraModalOpen) closeCameraModal();
-        else closeLightbox();
-        return;
-      }
-      if (event.key !== "Tab") return;
-
-      const dialog = document.querySelector<HTMLElement>('[role="dialog"][aria-modal="true"]');
-      if (!dialog) return;
-      const focusable = Array.from(
-        dialog.querySelectorAll<HTMLElement>(
-          'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
-        )
-      ).filter((element) => element.offsetParent !== null);
-      if (focusable.length === 0) return;
-
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
+        closeCamera();
       }
     };
 
-    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("keydown", onKeyDown);
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = previousOverflow;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cameraModalOpen, activePhoto]);
+  }, [cameraOpen]);
 
-  // Click / Snap photo from live camera
-  const handleSnapCamera = () => {
+  const setShot = (angle: SelfieAngle, file: File) => {
+    const previous = shots[angle];
+    if (previous) URL.revokeObjectURL(previous.preview);
+    const preview = URL.createObjectURL(file);
+    setShots((prev) => ({ ...prev, [angle]: { file, preview } }));
+    setSelfieError(null);
+    setSearchError(null);
+  };
+
+  const clearSelfie = () => {
+    Object.values(shots).forEach((shot) => {
+      if (shot) URL.revokeObjectURL(shot.preview);
+    });
+    setShots({});
+    setCaptureAngle("front");
+    setSearchResponse(null);
+    setMatchSelected([]);
+    setSelfieError(null);
+  };
+
+  const handleCapture = () => {
     if (!videoRef.current) return;
     const video = videoRef.current;
     const canvas = document.createElement("canvas");
@@ -298,130 +283,104 @@ function AttendeeSearchContent() {
     }
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    canvas.toBlob((blob) => {
-      if (!blob) return;
-      const file = new File([blob], `selfie_${cameraTargetAngle}.jpg`, { type: "image/jpeg" });
-      const previewUrl = URL.createObjectURL(blob);
+    const angle = captureAngle;
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) return;
+        const file = new File([blob], `selfie-${angle}.jpg`, { type: "image/jpeg" });
+        setShot(angle, file);
 
-      setAngleSlots((prev) => ({
-        ...prev,
-        [cameraTargetAngle]: {
-          ...prev[cameraTargetAngle],
-          file,
-          previewUrl,
-        },
-      }));
+        if (angle === "front") {
+          setCaptureAngle("left");
+        } else if (angle === "left") {
+          setCaptureAngle("right");
+        } else {
+          closeCamera();
+        }
+      },
+      "image/jpeg",
+      0.95
+    );
+  };
 
-      // Next angle suggestion logic
-      if (cameraTargetAngle === "front" && !angleSlots.left.file) {
-        setCameraTargetAngle("left");
-      } else if (cameraTargetAngle === "left" && !angleSlots.right.file) {
-        setCameraTargetAngle("right");
-      } else {
-        closeCameraModal();
+  const handleUpload = (input: React.ChangeEvent<HTMLInputElement>) => {
+    const target = input.target as HTMLInputElement;
+    const files = Array.from(target.files ?? []);
+    target.value = "";
+    if (files.length === 0) return;
+
+    const validFiles: File[] = [];
+    for (const file of files) {
+      const validType = file.type.startsWith("image/");
+      const validExt = [".jpg", ".jpeg", ".png", ".webp"].includes(
+        file.name.slice(file.name.lastIndexOf(".")).toLowerCase()
+      );
+      if (!validType && !validExt) {
+        setSelfieError("Choose JPG, PNG, or WebP images.");
+        return;
       }
-    }, "image/jpeg", 0.95);
-  };
-
-  // Upload photo into an angle slot
-  const handleSlotFileSelected = (angle: AngleType, file: File) => {
-    const ext = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
-    const validExts = [".jpg", ".jpeg", ".png", ".webp"];
-    if (!validExts.includes(ext) && !file.type.startsWith("image/")) {
-      setSearchError("Please select a JPG, JPEG, PNG, or WebP photo.");
-      return;
+      if (file.size > 10 * 1024 * 1024) {
+        setSelfieError("Each image must be 10 MB or smaller.");
+        return;
+      }
+      validFiles.push(file);
     }
 
-    setSearchError(null);
-    const previewUrl = URL.createObjectURL(file);
-    setAngleSlots((prev) => ({
-      ...prev,
-      [angle]: {
-        ...prev[angle],
-        file,
-        previewUrl,
-      },
-    }));
-  };
-
-  const clearSlot = (angle: AngleType) => {
-    const current = angleSlots[angle];
-    if (current.previewUrl) {
-      URL.revokeObjectURL(current.previewUrl);
-    }
-    setAngleSlots((prev) => ({
-      ...prev,
-      [angle]: {
-        ...prev[angle],
-        file: null,
-        previewUrl: null,
-      },
-    }));
-  };
-
-  // Batch Multi-Photo Handlers
-  const handleBatchFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    const newItems: { file: File; previewUrl: string }[] = [];
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      if (file.size > 10 * 1024 * 1024) continue;
-      newItems.push({
-        file,
-        previewUrl: URL.createObjectURL(file),
+    // If all three slots are filled, a new selection starts a fresh set.
+    let base = shots;
+    if (SELFIE_ORDER.every((angle) => shots[angle])) {
+      Object.values(shots).forEach((shot) => {
+        if (shot) URL.revokeObjectURL(shot.preview);
       });
+      base = {};
     }
 
-    setBatchFiles((prev) => [...prev, ...newItems]);
+    const next = { ...base };
+    const freeAngles = SELFIE_ORDER.filter((angle) => !next[angle]);
+    for (const file of validFiles.slice(0, freeAngles.length)) {
+      const angle = freeAngles.shift();
+      if (!angle) break;
+      next[angle] = { file, preview: URL.createObjectURL(file) };
+    }
+
+    setShots(next);
+    setCaptureAngle(SELFIE_ORDER.find((angle) => !next[angle]) ?? "front");
+    setSelfieError(null);
     setSearchError(null);
-    e.target.value = "";
   };
 
-  const removeBatchFile = (index: number) => {
-    setBatchFiles((prev) => {
-      const target = prev[index];
-      if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
-      return prev.filter((_, i) => i !== index);
-    });
+  const switchToUpload = () => {
+    closeCamera();
+    setMode("upload");
+    window.setTimeout(() => uploadInputRef.current?.click(), 100);
   };
 
-  // Gather probe files for search
-  const getSelectedFiles = (): File[] => {
-    if (activeTab === "guided") {
-      const files: File[] = [];
-      if (angleSlots.front.file) files.push(angleSlots.front.file);
-      if (angleSlots.left.file) files.push(angleSlots.left.file);
-      if (angleSlots.right.file) files.push(angleSlots.right.file);
-      return files;
-    } else {
-      return batchFiles.map((b) => b.file);
-    }
-  };
-
-  // Search Action
   const handleSearch = async () => {
     if (!event) return;
-    const probeFiles = getSelectedFiles();
-    if (probeFiles.length === 0) {
-      setSearchError("Please capture or upload at least one selfie angle to search.");
+    const probeFiles = SELFIE_ORDER.map((angle) => shots[angle]?.file).filter(
+      (file): file is File => Boolean(file)
+    );
+
+    if (probeFiles.length < 3) {
+      setSelfieError("Take the front, left, and right selfies first.");
+      selfieSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
 
     setSearching(true);
     setSearchError(null);
-    setSearchResponse(null);
 
     try {
-      const response = await api.searchBySelfie(event.id, probeFiles, tolerance, 60);
+      const response = await api.searchBySelfie(
+        event.id,
+        probeFiles,
+        event.match_tolerance ?? 0.5,
+        200
+      );
       setSearchResponse(response);
+      setMatchSelected([]);
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setSearchError(err.message);
-      } else {
-        setSearchError("Face recognition search failed. Please try again.");
-      }
+      setSearchError(err instanceof Error ? err.message : "Face search failed. Try again.");
     } finally {
       setSearching(false);
     }
@@ -433,47 +392,50 @@ function AttendeeSearchContent() {
       // Clipboard access can be blocked; the button still confirms visually.
     });
     setCopiedLink(true);
-    setTimeout(() => setCopiedLink(false), 2000);
+    window.setTimeout(() => setCopiedLink(false), 2000);
   };
 
-  const calculateConfidence = (dist: number | null): number => {
-    if (dist === null) return 85;
-    const score = Math.max(50, Math.min(99, Math.round((1 - (dist / 0.8)) * 100)));
-    return score;
-  };
+  const totalPhotos = eventView?.total_photos ?? 0;
+  const attendees = eventView?.attendees ?? 0;
 
-  const totalCapturedAngles = [
-    Boolean(angleSlots.front.file),
-    Boolean(angleSlots.left.file),
-    Boolean(angleSlots.right.file),
-  ].filter(Boolean).length;
+  const capturedAngles = SELFIE_ORDER.filter((angle) => Boolean(shots[angle]));
+  const allCaptured = capturedAngles.length === 3;
+  const firstShot = SELFIE_ORDER.map((angle) => shots[angle]).find(Boolean);
+  const frontPreview = shots.front?.preview ?? firstShot?.preview ?? null;
 
-  const totalProbesCount = activeTab === "guided" ? totalCapturedAngles : batchFiles.length;
+  const matchPhotos: GalleryPhoto[] =
+    searchResponse?.results.map((photo) => ({
+      id: photo.photo_id,
+      filename: photo.original_filename,
+      url: api.getPhotoDownloadUrl(photo.photo_id),
+    })) ?? [];
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50/70 text-slate-900 flex flex-col items-center justify-center space-y-4 font-sans">
-        <RefreshCw className="h-8 w-8 text-[#0053FF] animate-spin" />
-        <p className="text-sm text-slate-500 font-medium tracking-wide">Connecting to Event Gallery...</p>
+      <div className="flex min-h-screen flex-col items-center justify-center space-y-4 bg-slate-50/70 font-sans text-slate-900">
+        <RefreshCw className="h-8 w-8 animate-spin text-[#0053FF]" />
+        <p className="text-sm font-medium tracking-wide text-slate-500">Loading event</p>
       </div>
     );
   }
 
   if (error || !event) {
     return (
-      <div className="min-h-screen bg-slate-50/70 text-slate-900 flex flex-col items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white border border-slate-200/90 rounded-3xl p-8 text-center space-y-4 shadow-xl">
-          <div className="h-12 w-12 rounded-2xl bg-rose-50 text-rose-500 border border-rose-200 flex items-center justify-center mx-auto">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50/70 p-4 text-slate-900">
+        <div className="w-full max-w-md space-y-4 rounded-3xl border border-slate-200/90 bg-white p-8 text-center shadow-xl">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-rose-200 bg-rose-50 text-rose-500">
             <AlertCircle className="h-6 w-6" />
           </div>
-          <h2 className="text-xl font-bold text-slate-900">Event Not Found</h2>
-          <p className="text-sm text-slate-500">{error || "The event does not exist or has expired."}</p>
+          <h2 className="text-xl font-bold text-slate-900">Event not found</h2>
+          <p className="text-sm text-slate-500">
+            {error || "The event does not exist or has expired."}
+          </p>
           <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0053FF] hover:bg-[#0047db] text-white text-xs font-bold transition-colors shadow-lg shadow-[#0053FF]/20"
+            href="/"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#0053FF] px-5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-[#0047db]"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Go to Dashboard</span>
+            <span>Back to Sharext</span>
           </Link>
         </div>
       </div>
@@ -481,61 +443,49 @@ function AttendeeSearchContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/70 text-slate-900 flex flex-col font-sans selection:bg-[#0053FF] selection:text-white">
-      {/* Hidden file input for slot uploads */}
+    <div className="flex min-h-screen flex-col bg-slate-50/70 font-sans text-slate-900 selection:bg-[#0053FF] selection:text-white">
       <input
-        ref={slotFileRef}
+        ref={uploadInputRef}
         type="file"
-        accept="image/jpeg,image/jpg,image/pjpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp,.JPG,.JPEG,.PNG,.WEBP"
+        multiple
+        accept="image/jpeg,image/jpg,image/png,image/webp"
         className="hidden"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) handleSlotFileSelected(targetSlotUpload, file);
-          e.target.value = "";
-        }}
+        onChange={handleUpload}
       />
 
-      {/* Hidden native device camera input */}
-      <input
-        ref={nativeCameraRef}
-        type="file"
-        accept="image/*"
-        capture="user"
-        className="hidden"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) handleSlotFileSelected(targetSlotUpload, file);
-          e.target.value = "";
-        }}
-      />
-
-      {/* Top Header - Translucent & Sleek */}
-      <header className="border-b border-slate-200/60 bg-white/65 backdrop-blur-xl sticky top-0 z-30 transition-colors">
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <img 
-              src="/sharext-logo-dark.png" 
-              alt="Sharext Logo" 
-              className="h-8 sm:h-9 w-auto object-contain transition-transform group-hover:scale-102" 
+      <header className="sticky top-0 z-30 border-b border-slate-200/60 bg-white/65 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-8">
+          <Link href="/" className="flex items-center gap-2.5">
+            <img
+              src="/sharext-logo-dark.png"
+              alt="Sharext"
+              className="h-8 w-auto object-contain sm:h-9"
             />
           </Link>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <button
+              type="button"
               onClick={copyEventLink}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold border border-slate-200/80 transition-colors shadow-xs"
+              className="flex items-center gap-1.5 rounded-xl border border-slate-200/80 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-200"
               title="Share event link"
             >
-              {copiedLink ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Share2 className="h-3.5 w-3.5" />}
+              {copiedLink ? (
+                <Check className="h-3.5 w-3.5 text-emerald-600" />
+              ) : (
+                <Share2 className="h-3.5 w-3.5" />
+              )}
               <span>{copiedLink ? "Copied" : "Share"}</span>
             </button>
-            <Link
-              href={`/events/${event.id}/manage`}
-              className="px-4 py-2 rounded-xl text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 transition-all shadow-xs flex items-center gap-1.5"
-            >
-              <span>Organizer portal</span>
-              <span>→</span>
-            </Link>
+            {eventView?.is_host && (
+              <Link
+                href={`/events/${event.id}/manage`}
+                className="flex items-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2 text-xs font-medium text-white transition-all hover:bg-slate-800"
+              >
+                <span>Manage album</span>
+                <span aria-hidden="true">→</span>
+              </Link>
+            )}
           </div>
         </div>
       </header>
@@ -543,625 +493,428 @@ function AttendeeSearchContent() {
         {copiedLink ? "Event link copied" : ""}
       </p>
 
-      {/* Main Container */}
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-8 space-y-8">
-        {/* Event Hero Banner */}
-        <section className="relative rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-10 overflow-hidden shadow-sm">
-          <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-blue-100/50 blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-amber-100/40 blur-3xl pointer-events-none" />
-
-          <div className="relative space-y-4 max-w-2xl">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">
-                ATTENDEE PORTAL
-              </span>
-              <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-[#0053FF] border border-blue-200">
-                Multi-Angle Precision Verification
-              </span>
-              {event.event_date && (
-                <span className="text-xs text-slate-500 flex items-center gap-1 font-mono">
-                  <Calendar className="h-3.5 w-3.5 text-[#0053FF]" />
-                  {event.event_date}
-                </span>
-              )}
-              {stats && (
-                <span className="text-xs text-slate-600 flex items-center gap-1 font-mono bg-slate-50 px-2.5 py-0.5 rounded-full border border-slate-200">
-                  <Layers className="h-3.5 w-3.5 text-[#0053FF]" />
-                  {stats.processed_photos} photos indexed ({stats.detected_faces} faces)
-                </span>
-              )}
-            </div>
-
-            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 leading-tight">
+      <main className="mx-auto w-full max-w-5xl flex-1 space-y-8 px-4 py-8">
+        <section className="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-6 shadow-sm sm:p-10">
+          <div className="pointer-events-none absolute -right-20 -top-20 h-80 w-80 rounded-full bg-blue-100/50 blur-3xl" />
+          <div className="relative space-y-4">
+            <h1 className="text-3xl font-black leading-tight tracking-tight text-slate-900 sm:text-4xl">
               {event.name}
             </h1>
             {event.description && (
-              <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
+              <p className="max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
                 {event.description}
               </p>
             )}
 
-            <div className="pt-1 flex items-center gap-2 text-xs text-slate-500 font-mono">
-              <span>Event slug:</span>
-              <span className="text-slate-800 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 font-bold">
-                {event.slug}
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-1 text-xs text-slate-600">
+              <span className="flex items-center gap-1.5">
+                <Users className="h-3.5 w-3.5 text-[#0053FF]" />
+                <span>
+                  Posted by{" "}
+                  <span className="font-semibold text-slate-900">
+                    {event.host_name || "Sharext"}
+                  </span>
+                </span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Images className="h-3.5 w-3.5 text-slate-400" />
+                <span>{totalPhotos} photos</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Users className="h-3.5 w-3.5 text-slate-400" />
+                <span>{attendees} attended</span>
               </span>
             </div>
           </div>
         </section>
 
-        {/* Biometric Privacy Pledge */}
-        <section className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4 sm:p-5 flex items-start gap-3.5 shadow-sm">
-          <div className="h-9 w-9 rounded-xl bg-blue-100 text-[#0053FF] flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
-            <ShieldCheck className="h-5 w-5" />
-          </div>
-          <div className="space-y-1 text-xs sm:text-sm text-slate-700">
-            <p className="font-bold text-slate-900">Privacy First Architecture</p>
-            <p className="text-slate-600 text-xs leading-relaxed">
-              Your probe selfies are processed in-memory using deep learning (Dlib ResNet-34 metric embeddings).
-              They are never written to disk, never saved to the database, and are discarded immediately after searching.
-            </p>
-          </div>
-        </section>
-
-        {/* 3-Angle Selfie Capture & Upload Card */}
-        <section className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 space-y-8 shadow-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
-            <div>
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-[#0053FF]" />
-                <h2 className="text-lg sm:text-xl font-black text-slate-900">
-                  3-Angle Facial Search
+        {eventView?.is_host && (
+          <section className="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-sm sm:p-8">
+            <div className="flex flex-col gap-2 border-b border-slate-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-black text-slate-900 sm:text-xl">
+                  All uploaded photos
                 </h2>
-                <span className="text-[10px] font-mono font-bold bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                  {totalCapturedAngles}/3 Angles Ready
-                </span>
+                <p className="mt-1 text-xs text-slate-500">
+                  {hostPhotos.length} {hostPhotos.length === 1 ? "photo" : "photos"} in this event.
+                </p>
               </div>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                For each angle, you can either <strong>click a live selfie</strong> or <strong>upload an image</strong>.
-              </p>
+              <Link
+                href={`/events/${event.id}/manage`}
+                className="inline-flex h-9 items-center justify-center gap-1.5 self-start rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 sm:self-auto"
+              >
+                Manage album
+                <span aria-hidden="true">→</span>
+              </Link>
             </div>
 
-            {/* Mode Switcher */}
-            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 self-start sm:self-auto">
+            <div className="mt-4">
+              {hostPhotosLoading ? (
+                <div className="flex items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 py-16 text-sm text-slate-500">
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  Loading album
+                </div>
+              ) : (
+                <PhotoGallery
+                  photos={hostPhotos}
+                  density={hostDensity}
+                  onDensityChange={setHostDensity}
+                  selected={hostSelected}
+                  onSelectedChange={setHostSelected}
+                  emptyTitle="No photos uploaded yet"
+                  emptyBody="Upload photos from the organizer portal and they will appear here."
+                />
+              )}
+            </div>
+          </section>
+        )}
+
+        {searchResponse && (
+          <section ref={resultsRef} className="scroll-mt-24 space-y-6">
+            <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="flex items-center gap-2.5 text-xl font-black text-slate-900 sm:text-2xl">
+                  <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+                  <span>
+                    Found {searchResponse.total_results} photo
+                    {searchResponse.total_results === 1 ? "" : "s"}
+                  </span>
+                </h2>
+                <p className="mt-1 text-xs text-slate-500">
+                  {searchResponse.total_results === 0
+                    ? "No matches for this selfie."
+                    : "Your matched photos are shown first."}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                {frontPreview && (
+                  <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-1.5 shadow-sm">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={frontPreview}
+                      alt="Your selfie"
+                      className="h-9 w-9 rounded-lg object-cover"
+                    />
+                    <div className="pr-1">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                        Your selfie
+                      </p>
+                      <p className="text-[11px] text-slate-600">Used for this search</p>
+                    </div>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() =>
+                    selfieSectionRef.current?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    })
+                  }
+                  className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                >
+                  <Camera className="h-3.5 w-3.5" />
+                  Scan again
+                </button>
+              </div>
+            </div>
+
+            {searchResponse.total_results === 0 ? (
+              <div className="rounded-3xl border border-slate-200/90 bg-white p-12 text-center shadow-sm">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
+                  <Search className="h-7 w-7" />
+                </div>
+                <h3 className="mt-4 text-base font-bold text-slate-900">
+                  No matching photos
+                </h3>
+                <p className="mx-auto mt-1 max-w-md text-xs leading-relaxed text-slate-500">
+                  Try a clearer, front-facing selfie with good light.
+                </p>
+              </div>
+            ) : (
+              <PhotoGallery
+                photos={matchPhotos}
+                density={matchDensity}
+                onDensityChange={setMatchDensity}
+                selected={matchSelected}
+                onSelectedChange={setMatchSelected}
+                emptyTitle="No matching photos"
+                emptyBody="Try a different selfie."
+              />
+            )}
+          </section>
+        )}
+
+        <section
+          ref={selfieSectionRef}
+          className="scroll-mt-24 rounded-3xl border border-slate-200/90 bg-white p-6 shadow-sm sm:p-8"
+        >
+          <div className="border-b border-slate-100 pb-5">
+            <h2 className="text-lg font-black text-slate-900 sm:text-xl">Upload the selfie</h2>
+            <p className="mt-1 text-xs text-slate-500 sm:text-sm">
+              Take front, left, and right. All three are used to find your photos.
+            </p>
+          </div>
+
+          <div className="mt-5 flex flex-col gap-5">
+            <div className="flex w-full max-w-sm items-center gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1">
               <button
                 type="button"
-                onClick={() => setActiveTab("guided")}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  activeTab === "guided"
+                onClick={() => setMode("live")}
+                aria-pressed={mode === "live"}
+                className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition-all ${
+                  mode === "live"
                     ? "bg-[#0053FF] text-white shadow-md shadow-[#0053FF]/20"
                     : "text-slate-600 hover:text-slate-900"
                 }`}
               >
-                <Compass className="h-3.5 w-3.5" />
-                <span>3-Angle Probes</span>
+                <Camera className="h-3.5 w-3.5" />
+                <span>Live selfie</span>
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab("batch")}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  activeTab === "batch"
+                onClick={() => setMode("upload")}
+                aria-pressed={mode === "upload"}
+                className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition-all ${
+                  mode === "upload"
                     ? "bg-[#0053FF] text-white shadow-md shadow-[#0053FF]/20"
                     : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 <UploadCloud className="h-3.5 w-3.5" />
-                <span>Drop Multiple Photos</span>
+                <span>Upload selfie</span>
               </button>
             </div>
-          </div>
 
-          {activeTab === "guided" ? (
-            /* ============================================================ */
-            /* TAB 1: 3-ANGLE PROBES (REALTIME CLICK OR UPLOAD PER PROBE)   */
-            /* ============================================================ */
-            <div className="space-y-6">
-              {/* Top Guided Camera Launcher Banner */}
-              <div className="rounded-2xl border border-blue-200/80 bg-gradient-to-r from-blue-50 via-indigo-50/50 to-amber-50/30 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <span className="text-xs font-bold text-[#0053FF] flex items-center gap-1.5">
-                    <Camera className="h-4 w-4" />
-                    Interactive Camera Wizard
-                  </span>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    Step through Front → Left 45° → Right 45° with live alignment guides in one seamless flow.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => openCameraForAngle(angleSlots.front.file ? (angleSlots.left.file ? "right" : "left") : "front")}
-                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#0053FF] hover:bg-[#0047db] text-white text-xs font-bold transition-all shadow-md shadow-[#0053FF]/25 shrink-0"
-                >
-                  <Camera className="h-4 w-4" />
-                  <span>Launch Camera Wizard</span>
-                  <ChevronRight className="h-3.5 w-3.5" />
-                </button>
-              </div>
-
-              {/* 3 Dedicated Angle Probe Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {(["front", "left", "right"] as AngleType[]).map((angleKey) => {
-                  const slot = angleSlots[angleKey];
-                  const hasPhoto = Boolean(slot.file && slot.previewUrl);
-
-                  return (
-                    <div
-                      key={angleKey}
-                      className={`relative rounded-3xl p-5 border flex flex-col justify-between transition-all ${
-                        hasPhoto
-                          ? "border-emerald-300 bg-emerald-50/40 shadow-sm"
-                          : "border-slate-200/90 bg-slate-50/50 hover:border-slate-300 hover:bg-slate-50"
-                      }`}
-                    >
-                      {/* Card Header */}
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-700 font-bold">
-                            {slot.badge}
-                          </span>
-                          {hasPhoto && (
-                            <span className="text-[11px] font-mono text-emerald-700 font-bold flex items-center gap-1">
-                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                              Captured
-                            </span>
-                          )}
-                        </div>
-
-                        <div>
-                          <h3 className="text-base font-bold text-slate-900">{slot.title}</h3>
-                          <p className="text-xs text-slate-500 mt-0.5">{slot.description}</p>
-                        </div>
-                      </div>
-
-                      {/* Card Body: Preview or Selection Buttons */}
-                      <div className="my-4">
-                        {hasPhoto ? (
-                          <div className="relative aspect-square w-full rounded-2xl overflow-hidden border border-emerald-300 bg-slate-100 group shadow-sm">
+            {capturedAngles.length > 0 ? (
+              <div className="rounded-2xl border-2 border-emerald-300 bg-emerald-50 p-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <div className="flex items-end gap-2">
+                    {SELFIE_ORDER.map((angle) => (
+                      <div key={angle} className="flex flex-col items-center gap-1">
+                        {shots[angle] ? (
+                          <>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
-                              src={slot.previewUrl!}
-                              alt={slot.title}
-                              className="w-full h-full object-cover"
+                              src={shots[angle]!.preview}
+                              alt={`${SELFIE_CUES[angle].short} selfie`}
+                              className="h-20 w-16 rounded-xl object-cover ring-2 ring-emerald-400"
                             />
-                            <div className="absolute inset-0 bg-slate-900/50 opacity-0 group-hover:opacity-100 focus-within:opacity-100 flex items-center justify-center transition-opacity gap-2 [@media(hover:none)]:opacity-100">
-                              <button
-                                type="button"
-                                onClick={() => openCameraForAngle(angleKey)}
-                                className="h-11 w-11 rounded-xl bg-white text-slate-700 hover:text-white hover:bg-[#0053FF] flex items-center justify-center transition-colors shadow-lg"
-                                title="Retake Live Selfie"
-                              >
-                                <RotateCcw className="h-4 w-4" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setTargetSlotUpload(angleKey);
-                                  slotFileRef.current?.click();
-                                }}
-                                className="h-11 w-11 rounded-xl bg-white text-slate-700 hover:text-white hover:bg-[#0053FF] flex items-center justify-center transition-colors shadow-lg"
-                                title="Upload Different File"
-                              >
-                                <UploadCloud className="h-4 w-4" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => clearSlot(angleKey)}
-                                className="h-11 w-11 rounded-xl bg-white text-rose-600 hover:text-white hover:bg-rose-600 flex items-center justify-center transition-colors shadow-lg"
-                                title="Remove Angle"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </div>
+                          </>
                         ) : (
-                          <div className="space-y-3">
-                            {/* Pose guidance silhouette */}
-                            <div className="relative aspect-[4/3] w-full rounded-2xl border border-dashed border-slate-300 bg-white flex flex-col items-center justify-center p-3 text-center shadow-inner">
-                              <div
-                                className={`w-12 h-14 rounded-[45%] border-2 border-[#0053FF]/40 bg-blue-50 flex items-center justify-center transition-transform ${
-                                  angleKey === "left" ? "-rotate-12" : angleKey === "right" ? "rotate-12" : ""
-                                }`}
-                              >
-                                <Compass className="h-5 w-5 text-[#0053FF]" />
-                              </div>
-                              <span className="text-[11px] text-slate-600 mt-2 font-medium">
-                                {slot.guidePrompt}
-                              </span>
-                            </div>
-
-                            {/* Dual Action Buttons: Live Selfie OR File Upload */}
-                            <div className="grid grid-cols-2 gap-2">
-                              <button
-                                type="button"
-                                onClick={() => openCameraForAngle(angleKey)}
-                                className="py-2.5 px-2 rounded-xl bg-[#0053FF] hover:bg-[#0047db] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#0053FF]/20 group"
-                                title="Click live selfie using camera"
-                              >
-                                <Camera className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                                <span>Take Selfie</span>
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setTargetSlotUpload(angleKey);
-                                  slotFileRef.current?.click();
-                                }}
-                                className="py-2.5 px-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm"
-                                title="Upload photo file from device"
-                              >
-                                <UploadCloud className="h-4 w-4 text-slate-500" />
-                                <span>Upload File</span>
-                              </button>
-                            </div>
+                          <div className="flex h-20 w-16 items-center justify-center rounded-xl border border-dashed border-emerald-300 bg-white/60 text-[10px] font-bold text-emerald-700">
+                            {SELFIE_CUES[angle].short}
                           </div>
                         )}
+                        <span
+                          className={`text-[9px] font-bold uppercase tracking-wide ${
+                            shots[angle] ? "text-emerald-700" : "text-emerald-500"
+                          }`}
+                        >
+                          {SELFIE_CUES[angle].short}
+                        </span>
                       </div>
-
-                      {/* Card Footer Actions when photo present */}
-                      {hasPhoto && (
-                        <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-[11px]">
-                          <button
-                            type="button"
-                            onClick={() => openCameraForAngle(angleKey)}
-                            className="text-[#0053FF] hover:underline font-bold flex items-center gap-1"
-                          >
-                            <Camera className="h-3 w-3" />
-                            <span>Retake live</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setTargetSlotUpload(angleKey);
-                              slotFileRef.current?.click();
-                            }}
-                            className="text-slate-600 hover:text-slate-900 font-medium flex items-center gap-1"
-                          >
-                            <UploadCloud className="h-3 w-3" />
-                            <span>Upload file</span>
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                    ))}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="flex items-center gap-1.5 text-sm font-semibold text-emerald-800">
+                      <CheckCircle2 className="h-4 w-4" />
+                      {capturedAngles.length} of 3 selfies captured
+                    </p>
+                    <p className="mt-0.5 text-xs text-emerald-700">
+                      {allCaptured
+                        ? "Ready to search."
+                        : "Take the remaining angles to search."}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 sm:ml-auto">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (mode === "live") openCamera();
+                        else uploadInputRef.current?.click();
+                      }}
+                      className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-emerald-300 bg-white px-3 text-xs font-semibold text-emerald-800 transition-colors hover:bg-emerald-100"
+                    >
+                      <Camera className="h-3.5 w-3.5" />
+                      {mode === "live" ? (allCaptured ? "Retake" : "Continue") : "Replace"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={clearSelfie}
+                      aria-label="Remove selfies"
+                      className="flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-300 bg-white text-rose-600 transition-colors hover:bg-rose-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
-          ) : (
-            /* ============================================================ */
-            /* TAB 2: MULTI-PHOTO BATCH DROP                                 */
-            /* ============================================================ */
-            <div className="space-y-6">
+            ) : mode === "live" ? (
+              <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 px-6 py-10 text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-blue-200 bg-blue-50 text-[#0053FF]">
+                  <Camera className="h-7 w-7" />
+                </div>
+                <p className="mt-3 text-sm font-bold text-slate-900">Take 3 selfies</p>
+                <p className="mt-1 max-w-sm text-xs text-slate-500">
+                  We&apos;ll guide you through front, left, and right.
+                </p>
+                <button
+                  type="button"
+                  onClick={openCamera}
+                  className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#0053FF] px-5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-[#0047db]"
+                >
+                  <Camera className="h-4 w-4" />
+                  <span>Start 3 selfies</span>
+                </button>
+              </div>
+            ) : (
               <label
                 role="button"
                 tabIndex={0}
-                aria-label="Select multiple photos"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    batchInputRef.current?.click();
+                onClick={() => uploadInputRef.current?.click()}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    uploadInputRef.current?.click();
                   }
                 }}
-                className="w-full rounded-3xl border-2 border-dashed border-slate-300 hover:border-[#0053FF] bg-slate-50/60 p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0053FF]"
+                className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50/60 px-6 py-10 text-center transition-all hover:border-[#0053FF] hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0053FF]"
               >
-                <input
-                  ref={batchInputRef}
-                  type="file"
-                  multiple
-                  accept="image/jpeg,image/jpg,image/pjpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp,.JPG,.JPEG,.PNG,.WEBP"
-                  onChange={handleBatchFiles}
-                  className="hidden"
-                />
-                <div className="h-14 w-14 rounded-2xl bg-blue-50 border border-blue-200 text-[#0053FF] flex items-center justify-center mb-3 group-hover:scale-110 group-hover:bg-blue-100 transition-all shadow-sm">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-blue-200 bg-blue-50 text-[#0053FF]">
                   <UploadCloud className="h-7 w-7" />
                 </div>
-                <span className="text-sm font-bold text-slate-900">Drop Multiple Photos of Yourself</span>
-                <span className="text-xs text-slate-500 mt-1">
-                  Upload 1 to 5 photos with different angles, expressions, or candid shots (JPG, PNG, WebP)
-                </span>
-                <span className="mt-4 text-[11px] font-mono font-bold text-[#0053FF] bg-blue-50 px-3.5 py-1.5 rounded-full border border-blue-200 shadow-sm">
-                  Select Multiple Files
-                </span>
+                <p className="mt-3 text-sm font-bold text-slate-900">Choose 3 selfies</p>
+                <p className="mt-1 max-w-sm text-xs text-slate-500">
+                  Front, left, and right. JPG, PNG, or WebP, up to 10 MB each.
+                </p>
               </label>
+            )}
 
-              {/* Thumbnails of batch files */}
-              {batchFiles.length > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {batchFiles.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 aspect-square group shadow-sm"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={item.previewUrl}
-                        alt={`Probe ${idx + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeBatchFile(idx)}
-                        className="absolute top-2 right-2 h-7 w-7 rounded-full bg-white/90 text-rose-600 hover:bg-rose-600 hover:text-white flex items-center justify-center transition-colors shadow-md"
-                        title="Remove photo"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                      <div className="absolute bottom-2 left-2">
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-white/90 text-slate-700 shadow-sm font-bold">
-                          Angle #{idx + 1}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Tolerance Slider & Search Trigger */}
-          <div className="pt-4 border-t border-slate-100 space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
-              <div className="flex items-center gap-2">
-                <Sliders className="h-4 w-4 text-[#0053FF]" />
-                <div>
-                  <span className="text-xs font-bold text-slate-900">Face Match Sensitivity</span>
-                  <p className="text-[11px] text-slate-500">
-                    High-Precision Mode ({tolerance.toFixed(2)}) — Strict matching for frontal &amp; angled shots
-                  </p>
-                </div>
+            {selfieError && (
+              <div
+                role="alert"
+                className="flex items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-xs font-medium text-rose-700"
+              >
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <span>{selfieError}</span>
               </div>
-              <div className="flex items-center gap-3">
-                <input
-                  type="range"
-                  min="0.35"
-                  max="0.52"
-                  step="0.01"
-                  aria-label="Face match sensitivity"
-                  value={tolerance}
-                  onChange={(e) => setTolerance(parseFloat(e.target.value))}
-                  className="w-36 accent-[#0053FF] cursor-pointer"
-                />
-                <span className="text-xs font-mono font-black text-[#0053FF] w-10 text-right">
-                  {tolerance.toFixed(2)}
-                </span>
-              </div>
-            </div>
+            )}
 
             {searchError && (
-              <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 p-4 flex items-center gap-3 text-rose-700 text-xs font-medium">
-                <AlertCircle className="h-4 w-4 shrink-0 text-rose-500" />
+              <div
+                role="alert"
+                className="flex items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-xs font-medium text-rose-700"
+              >
+                <AlertCircle className="h-4 w-4 shrink-0" />
                 <span>{searchError}</span>
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <button
-                type="button"
-                onClick={handleSearch}
-                disabled={totalProbesCount === 0 || searching}
-                className="w-full sm:w-auto min-w-[280px] flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-2xl bg-[#0053FF] hover:bg-[#0047db] text-white font-black text-sm transition-all shadow-xl shadow-[#0053FF]/25 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.01]"
-              >
-                {searching ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 animate-spin text-[#FCAA02]" />
-                    <span>Analyzing {totalProbesCount} Angle Probe(s)...</span>
-                  </>
-                ) : (
-                  <>
-                    <Search className="h-4 w-4 text-[#FCAA02]" />
-                    <span>
-                      Search with {totalProbesCount > 0 ? `${totalProbesCount} Probe Angle${totalProbesCount > 1 ? "s" : ""}` : "Selfie"}
-                    </span>
-                  </>
-                )}
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleSearch}
+              disabled={!allCaptured || searching}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0053FF] px-8 py-3.5 text-sm font-black text-white shadow-xl shadow-[#0053FF]/25 transition-all hover:bg-[#0047db] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-[240px]"
+            >
+              {searching ? (
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  <span>Searching photos</span>
+                </>
+              ) : (
+                <>
+                  <Search className="h-4 w-4" />
+                  <span>Search my photos</span>
+                </>
+              )}
+            </button>
+            {!allCaptured && (
+              <p className="text-[11px] text-slate-500">
+                Capture all three angles to search.
+              </p>
+            )}
           </div>
         </section>
-
-        {/* Search Results Display */}
-        {searchResponse && (
-          <section className="space-y-6 pt-2">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-2.5">
-                  <CheckCircle2 className="h-6 w-6 text-emerald-600" />
-                  <span>
-                    Found {searchResponse.total_results} Photo{searchResponse.total_results === 1 ? "" : "s"}
-                  </span>
-                </h2>
-                <p className="text-xs text-slate-500 mt-1">
-                  Matched across {searchResponse.faces_detected_in_selfie} probe facial vector(s) with high-precision identity verification
-                </p>
-              </div>
-
-              {searchResponse.total_results > 0 && (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono font-bold text-slate-600 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-sm">
-                    Showing top {searchResponse.results.length} matches
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {searchResponse.total_results === 0 ? (
-              /* Empty State */
-              <div className="rounded-3xl border border-slate-200/90 bg-white p-12 text-center space-y-4 shadow-sm">
-                <div className="h-14 w-14 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mx-auto">
-                  <Search className="h-7 w-7" />
-                </div>
-                <h3 className="text-base font-bold text-slate-900">No Matching Photos Found</h3>
-                <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-                  We couldn&apos;t find any photos with a matching facial vector at tolerance {tolerance.toFixed(2)}.
-                  Try capturing all 3 angles (Front, Left, Right) or adjusting the sensitivity slider above to 0.50–0.52.
-                </p>
-              </div>
-            ) : (
-              /* Photo Grid */
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {searchResponse.results.map((photo) => {
-                  const conf = photo.confidence ?? calculateConfidence(photo.best_distance);
-                  const isGroup = photo.matched_faces > 1;
-
-                  return (
-                    <div
-                      key={photo.photo_id}
-                      className="group relative rounded-2xl overflow-hidden border border-slate-200/90 bg-white hover:border-[#0053FF]/60 transition-all hover:shadow-xl shadow-sm flex flex-col"
-                    >
-                      {/* Image container */}
-                      <div className="relative aspect-square w-full overflow-hidden bg-slate-100">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={api.getPhotoDownloadUrl(photo.photo_id)}
-                          alt={photo.original_filename}
-                          loading="lazy"
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-
-                        {/* Top Badges */}
-                        <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between pointer-events-none">
-                          <span className="text-[10px] font-mono font-bold flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/95 text-emerald-700 border border-emerald-200 backdrop-blur-md shadow-sm">
-                            <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                            Verified
-                          </span>
-                          {isGroup && (
-                            <span className="text-[10px] font-mono font-bold flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/95 text-amber-700 border border-amber-200 backdrop-blur-md shadow-sm">
-                              <Users className="h-3 w-3" />
-                              Group
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Hover Overlay with Lightbox trigger */}
-                        <button
-                          type="button"
-                          onClick={() => openPhotoPreview(photo)}
-                          aria-label={`Preview ${photo.original_filename}`}
-                          className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-[2px]"
-                        >
-                          <div className="h-10 w-10 rounded-full bg-white text-slate-800 flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
-                            <Maximize2 className="h-5 w-5" />
-                          </div>
-                        </button>
-                      </div>
-
-                      {/* Card Footer */}
-                      <div className="p-3 bg-white border-t border-slate-100 flex items-center justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="text-xs text-slate-800 font-bold truncate" title={photo.original_filename}>
-                            {photo.original_filename}
-                          </p>
-                          <p className="text-[10px] font-mono text-slate-400">
-                            Dist: {photo.best_distance !== null ? photo.best_distance.toFixed(3) : "N/A"}
-                          </p>
-                        </div>
-
-                        <a
-                          href={api.getPhotoDownloadUrl(photo.photo_id)}
-                          download={photo.original_filename}
-                          className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 hover:bg-[#0053FF] text-slate-600 hover:text-white shrink-0 transition-colors shadow-sm"
-                          title="Download photograph"
-                        >
-                          <Download className="h-3.5 w-3.5" />
-                        </a>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-        )}
       </main>
 
-      {/* ============================================================ */}
-      {/* REALTIME CAMERA SNAP MODAL (FOR ALL 3 PROBE ANGLES)          */}
-      {/* ============================================================ */}
-      {cameraModalOpen && (
+      {cameraOpen && (
         <div
-          className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 p-4 backdrop-blur-sm"
           onClick={(event) => {
-            if (event.target === event.currentTarget) closeCameraModal();
+            if (event.target === event.currentTarget) closeCamera();
           }}
         >
           <div
             role="dialog"
             aria-modal="true"
-            aria-labelledby="camera-modal-title"
-            className="relative max-w-md w-full bg-white border border-slate-200 rounded-3xl p-6 flex flex-col items-center space-y-4 shadow-2xl"
+            aria-labelledby="camera-title"
+            className="relative flex w-full max-w-md flex-col items-center space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl"
           >
-            {/* Modal Header */}
-            <div className="w-full flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
+            <div className="flex w-full items-center justify-between border-b border-slate-100 pb-3">
+              <span id="camera-title" className="flex items-center gap-2 text-sm font-bold text-slate-900">
                 <Camera className="h-4 w-4 text-[#0053FF]" />
-                <span id="camera-modal-title" className="text-sm font-bold text-slate-900">
-                  Capturing: {angleSlots[cameraTargetAngle].title}
-                </span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-50 text-[#0053FF] font-bold">
-                  {angleSlots[cameraTargetAngle].badge}
-                </span>
-              </div>
+                Take 3 selfies
+              </span>
               <button
                 type="button"
-                onClick={closeCameraModal}
+                onClick={closeCamera}
                 aria-label="Close camera"
                 autoFocus
-                className="h-10 w-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-colors"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition-colors hover:bg-slate-200"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            {/* Angle Selection Tabs inside Camera */}
-            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 w-full justify-between">
-              {(["front", "left", "right"] as AngleType[]).map((aKey) => (
-                <button
-                  key={aKey}
-                  type="button"
-                  aria-pressed={cameraTargetAngle === aKey}
-                  onClick={() => setCameraTargetAngle(aKey)}
-                  className={`flex-1 py-1.5 px-2 text-xs font-bold rounded-lg transition-all ${
-                    cameraTargetAngle === aKey
-                      ? "bg-[#0053FF] text-white shadow"
-                      : "text-slate-600 hover:text-slate-900"
-                  }`}
-                >
-                  {angleSlots[aKey].title}
-                </button>
-              ))}
+            <div className="w-full rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-center">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#0053FF]">
+                Step {SELFIE_ORDER.indexOf(captureAngle) + 1} of 3
+              </p>
+              <p className="mt-0.5 text-base font-black text-[#0053FF]">
+                {SELFIE_CUES[captureAngle].label}
+              </p>
+              <p className="text-[11px] text-slate-600">
+                {SELFIE_CUES[captureAngle].hint}
+              </p>
             </div>
 
-            {/* Live Camera Viewfinder */}
-            <div className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden border border-slate-200 bg-black flex flex-col items-center justify-center shadow-inner">
+            <div className="flex w-full items-center justify-center gap-1.5">
+              {SELFIE_ORDER.map((angle) => {
+                const done = Boolean(shots[angle]);
+                const current = captureAngle === angle;
+                return (
+                  <span
+                    key={angle}
+                    className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold ${
+                      done
+                        ? "border-emerald-200 bg-emerald-100 text-emerald-700"
+                        : current
+                        ? "border-[#0053FF] bg-[#0053FF] text-white"
+                        : "border-slate-200 bg-slate-100 text-slate-500"
+                    }`}
+                  >
+                    {done && <Check className="h-3 w-3" strokeWidth={3} />}
+                    {SELFIE_CUES[angle].short}
+                  </span>
+                );
+              })}
+            </div>
+
+            <div className="relative flex aspect-[3/4] w-full flex-col items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-black shadow-inner">
               {cameraError ? (
-                <div className="p-6 text-center space-y-3">
-                  <AlertCircle className="h-8 w-8 text-amber-500 mx-auto" />
-                  <p className="text-xs text-slate-600 leading-relaxed">{cameraError}</p>
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        closeCameraModal();
-                        triggerNativeCamera(cameraTargetAngle);
-                      }}
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#0053FF] hover:bg-[#0047db] text-white text-xs font-bold shadow-md shadow-[#0053FF]/20"
-                    >
-                      <Camera className="h-4 w-4" />
-                      <span>Open Device Camera</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        closeCameraModal();
-                        setTargetSlotUpload(cameraTargetAngle);
-                        slotFileRef.current?.click();
-                      }}
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold border border-slate-200 shadow-sm"
-                    >
-                      <UploadCloud className="h-4 w-4 text-slate-500" />
-                      <span>Upload File Instead</span>
-                    </button>
-                  </div>
+                <div className="space-y-3 p-6 text-center">
+                  <AlertCircle className="mx-auto h-8 w-8 text-amber-500" />
+                  <p className="text-xs leading-relaxed text-slate-300">{cameraError}</p>
+                  <button
+                    type="button"
+                    onClick={switchToUpload}
+                    className="inline-flex items-center gap-2 rounded-xl bg-[#0053FF] px-4 py-2.5 text-xs font-bold text-white transition-colors hover:bg-[#0047db]"
+                  >
+                    <UploadCloud className="h-4 w-4" />
+                    <span>Upload a selfie</span>
+                  </button>
                 </div>
               ) : (
                 <>
@@ -1169,127 +922,45 @@ function AttendeeSearchContent() {
                     ref={videoRef}
                     playsInline
                     muted
-                    className={`w-full h-full object-cover ${facingMode === "user" ? "-scale-x-100" : ""}`}
+                    className={`h-full w-full object-cover ${facingMode === "user" ? "-scale-x-100" : ""}`}
                   />
-
-                  {/* Pose Guidance Frame */}
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div
-                      className={`w-52 h-64 rounded-[48%] border-2 border-dashed shadow-[0_0_40px_rgba(0,83,255,0.3)] animate-pulse transition-all ${
-                        cameraTargetAngle === "front"
-                          ? "border-[#0053FF]"
-                          : cameraTargetAngle === "left"
-                          ? "border-sky-400 -rotate-8"
-                          : "border-amber-400 rotate-8"
-                      }`}
-                    />
+                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                    <div className="h-64 w-48 rounded-[48%] border-2 border-dashed border-[#0053FF]/70 shadow-[0_0_40px_rgba(0,83,255,0.3)]" />
                   </div>
-
-                  {/* Flip Camera Button */}
-                  <div className="absolute top-3 right-3 z-10">
+                  <button
+                    type="button"
+                    onClick={() => setFacingMode((prev) => (prev === "user" ? "environment" : "user"))}
+                    className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full border border-slate-700/60 bg-slate-900/80 text-white backdrop-blur-md transition-colors hover:bg-slate-900"
+                    title="Switch camera"
+                  >
+                    <SwitchCamera className="h-3.5 w-3.5" />
+                  </button>
+                  <div className="absolute inset-x-0 bottom-4 flex flex-col items-center gap-1.5">
                     <button
                       type="button"
-                      onClick={toggleFacingMode}
-                      className="h-8 w-8 rounded-full bg-slate-900/80 hover:bg-slate-900 text-white flex items-center justify-center backdrop-blur-md border border-slate-700/60 transition-colors"
-                      title="Switch camera"
-                    >
-                      <SwitchCamera className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-
-                  {/* Angle Guideline Badge */}
-                  <div className="absolute top-3 left-3 z-10">
-                    <span className="text-[11px] font-mono px-3 py-1 rounded-full bg-white/90 backdrop-blur-md text-[#0053FF] border border-blue-200 font-bold shadow-sm">
-                      {angleSlots[cameraTargetAngle].guidePrompt}
-                    </span>
-                  </div>
-
-                  {/* Snap Trigger */}
-                  <div className="absolute bottom-4 inset-x-0 flex flex-col items-center gap-1.5 z-10">
-                    <button
-                      type="button"
-                      onClick={handleSnapCamera}
+                      onClick={handleCapture}
                       disabled={!cameraActive}
-                      className="h-16 w-16 rounded-full bg-white hover:scale-105 active:scale-95 transition-all p-1.5 shadow-2xl flex items-center justify-center group disabled:opacity-50"
-                      title={`Snap ${angleSlots[cameraTargetAngle].title}`}
+                      className="flex h-16 w-16 items-center justify-center rounded-full bg-white p-1.5 shadow-2xl transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+                      title={`Capture ${SELFIE_CUES[captureAngle].short}`}
                     >
-                      <div className="w-full h-full rounded-full border-2 border-slate-900 group-hover:bg-[#0053FF] transition-colors" />
+                      <span className="h-full w-full rounded-full border-2 border-slate-900" />
                     </button>
-                    <span className="text-[11px] font-mono text-white drop-shadow-md font-bold">
-                      Tap circle to snap {angleSlots[cameraTargetAngle].title}
+                    <span className="text-[11px] font-semibold text-white drop-shadow-md">
+                      Tap to capture {SELFIE_CUES[captureAngle].short.toLowerCase()}
                     </span>
                   </div>
                 </>
               )}
             </div>
 
-            {/* Bottom Alternative: Upload File for this angle */}
-            <div className="w-full flex items-center justify-between pt-1">
-              <span className="text-xs text-slate-500">Prefer a photo from your gallery?</span>
-              <button
-                type="button"
-                onClick={() => {
-                  closeCameraModal();
-                  setTargetSlotUpload(cameraTargetAngle);
-                  slotFileRef.current?.click();
-                }}
-                className="text-xs text-[#0053FF] hover:underline font-bold flex items-center gap-1"
-              >
-                <UploadCloud className="h-3.5 w-3.5" />
-                <span>Upload {angleSlots[cameraTargetAngle].title}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Fullscreen Photo Lightbox Modal */}
-      {activePhoto && (
-        <div
-          className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4"
-          onClick={(event) => {
-            if (event.target === event.currentTarget) closeLightbox();
-          }}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Photo preview"
-            className="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center"
-          >
             <button
               type="button"
-              onClick={closeLightbox}
-              aria-label="Close photo preview"
-              autoFocus
-              className="absolute -top-12 right-0 h-10 w-10 rounded-full bg-white text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors shadow-lg"
+              onClick={switchToUpload}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0053FF] hover:underline"
             >
-              <X className="h-5 w-5" />
+              <UploadCloud className="h-3.5 w-3.5" />
+              Upload a photo instead
             </button>
-
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={api.getPhotoDownloadUrl(activePhoto.photo_id)}
-              alt={activePhoto.original_filename}
-              className="max-h-[75vh] w-auto object-contain rounded-2xl shadow-2xl border border-slate-200"
-            />
-
-            <div className="mt-4 flex items-center justify-between w-full max-w-xl bg-white px-5 py-3 rounded-2xl border border-slate-200 text-xs shadow-xl">
-              <div>
-                <p className="font-bold text-slate-900">{activePhoto.original_filename}</p>
-                <p className="text-slate-500 font-mono text-[11px]">
-                  Status: Verified Match • Distance: {activePhoto.best_distance?.toFixed(3)}
-                </p>
-              </div>
-              <a
-                href={api.getPhotoDownloadUrl(activePhoto.photo_id)}
-                download={activePhoto.original_filename}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#0053FF] hover:bg-[#0047db] text-white font-bold transition-colors shadow-md shadow-[#0053FF]/20"
-              >
-                <Download className="h-4 w-4" />
-                <span>Download Photo</span>
-              </a>
-            </div>
           </div>
         </div>
       )}
@@ -1297,16 +968,16 @@ function AttendeeSearchContent() {
   );
 }
 
-export default function AttendeeSearchPage() {
+export default function AttendeeEventPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-slate-50/70 flex items-center justify-center text-slate-500 font-medium text-sm">
-          Loading Event...
+        <div className="flex min-h-screen items-center justify-center bg-slate-50/70 text-sm font-medium text-slate-500">
+          Loading event
         </div>
       }
     >
-      <AttendeeSearchContent />
+      <AttendeeEventContent />
     </Suspense>
   );
 }

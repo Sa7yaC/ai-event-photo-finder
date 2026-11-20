@@ -1,4 +1,5 @@
 import os
+import uuid
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
@@ -8,9 +9,18 @@ from sqlalchemy.pool import StaticPool
 
 os.environ["ENVIRONMENT"] = "testing"
 
+from app.api.v1.auth import get_current_user
 from app.core.database import get_db
 from app.main import app
-from app.models import Base
+from app.models import Base, User
+
+TEST_USER_ID = uuid.UUID("00000000-0000-4000-8000-000000000001")
+TEST_USER = User(
+    id=TEST_USER_ID,
+    email="test-host@example.com",
+    name="Test Host",
+    email_verified=True,
+)
 
 # Isolated async in-memory SQLite for test suite
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
@@ -46,6 +56,16 @@ async def override_get_db():
 async def setup_test_database():
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    async with TestingSessionLocal() as session:
+        session.add(
+            User(
+                id=TEST_USER_ID,
+                email=TEST_USER.email,
+                name=TEST_USER.name,
+                email_verified=True,
+            )
+        )
+        await session.commit()
     yield
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
@@ -54,6 +74,7 @@ async def setup_test_database():
 @pytest_asyncio.fixture
 async def async_client():
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user] = lambda: TEST_USER
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         yield client
